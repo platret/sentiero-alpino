@@ -86,6 +86,13 @@ function renderList () {
   }
   for (const h of state.hikes) {
     const card = el('article', { class: 'card' })
+    if (h.imageElevation) {
+      const thumb = el('div', { class: 'thumb' })
+      const img = el('img', { alt: 'Höhenprofil ' + h.name, loading: 'lazy', src: IMG_BASE + encodeURIComponent(h.imageElevation) })
+      img.onerror = () => { thumb.classList.add('thumb-missing'); img.remove() }
+      thumb.appendChild(img)
+      card.appendChild(thumb)
+    }
     const top = el('div', { class: 'top' })
     top.appendChild(el('h3', { text: h.name }))
     const route = el('div', { class: 'route' })
