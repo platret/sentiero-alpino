@@ -199,10 +199,16 @@ header{position:sticky;top:0;z-index:1040;background:var(--header-bg);color:var(
 .t small{display:block;font-weight:400;opacity:.85;margin-top:2px}
 @keyframes slide{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
 
-.legend{background:var(--pine);color:var(--cream);border-radius:14px;padding:20px 24px;margin:0 0 30px}
-:root[data-theme="dark"] .legend{background:#0e1f1a;border:1px solid var(--border)}
-.legend h3{color:var(--gold);font-size:16px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
-.legend .uc{display:flex;flex-wrap:wrap;gap:8px}
-.uc span{background:#ffffff14;border:1px solid #ffffff33;padding:5px 11px;border-radius:7px;font-size:13px}
+#splash{position:fixed;inset:0;z-index:1100;background:radial-gradient(ellipse at 50% 65%,#2d543f 0%,#1f3d2e 55%,#0e1f1a 100%);display:grid;place-items:center;transition:opacity .5s ease}
+#splash.gone{opacity:0;pointer-events:none}
+.splash-inner{display:flex;flex-direction:column;align-items:center;gap:14px}
+#splash svg{width:min(320px,62vw);height:auto;display:block;filter:drop-shadow(0 18px 40px rgba(0,0,0,.45))}
+#splash .sun,#splash .halo{transform-origin:50% 110px;animation:sunrise 1.5s cubic-bezier(.22,.7,.3,1) forwards}
+#splash .halo{animation-name:sunriseHalo}
+@keyframes sunrise{0%{transform:translateY(38px);opacity:0}30%{opacity:1}100%{transform:translateY(-30px);opacity:1}}
+@keyframes sunriseHalo{0%{transform:translateY(38px) scale(.6);opacity:0}40%{opacity:.7}100%{transform:translateY(-30px) scale(1.15);opacity:.85}}
+.splash-label{font-family:'Fraunces',serif;color:#f4f0e6;font-weight:600;letter-spacing:.04em;font-size:18px;display:flex;align-items:center;gap:10px;animation:splashFade 1s .2s ease both}
+.splash-label .mk{width:26px;height:26px;border:2px solid #c08a2d;border-radius:50%;display:inline-grid;place-items:center;color:#c08a2d;font-size:13px}
+@keyframes splashFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 @media(max-width:820px){.dgrid{grid-template-columns:1fr}.hero h1{font-size:38px}.facts{grid-template-columns:1fr}.bar{flex-wrap:wrap}}

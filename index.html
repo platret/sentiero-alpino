@@ -18,10 +18,34 @@
     var l = localStorage.getItem('sentiero.lang');
     if (l) document.documentElement.lang = l;
   } catch(e){}
+  window.__splashStarted = Date.now();
 })();
 </script>
 </head>
 <body>
+<div id="splash" aria-hidden="true">
+  <div class="splash-inner">
+    <svg viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="sg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f4c66b" stop-opacity="1"/>
+          <stop offset="55%" stop-color="#c08a2d" stop-opacity=".5"/>
+          <stop offset="100%" stop-color="#c08a2d" stop-opacity="0"/>
+        </radialGradient>
+        <clipPath id="sky"><rect x="0" y="0" width="240" height="115"/></clipPath>
+      </defs>
+      <g clip-path="url(#sky)">
+        <circle class="halo" cx="120" cy="110" r="46" fill="url(#sg)"/>
+        <circle class="sun" cx="120" cy="110" r="16" fill="#f4c66b"/>
+      </g>
+      <path d="M 0 160 L 50 90 L 95 115 L 140 70 L 180 100 L 240 80 L 240 160 Z" fill="#1a3324"/>
+      <path d="M 0 160 L 40 120 L 95 135 L 150 110 L 200 130 L 240 118 L 240 160 Z" fill="#0f2419"/>
+    </svg>
+    <div class="splash-label">
+      <span class="mk">&#9650;</span> SentieroAlpino
+    </div>
+  </div>
+</div>
 <header>
   <div class="container bar">
     <div class="logo"><span class="mk">&#9650;</span> SentieroAlpino</div>
@@ -35,15 +59,6 @@
       <div class="eyebrow" data-i18n="hero.eyebrow">Schweizerischer Nationalpark</div>
       <h1 data-i18n="hero.title">Wanderungen</h1>
       <p data-i18n="hero.lead">Entdecke, erfasse und verwalte Bergwanderungen. Modul M294 – Frontend mit Live-API.</p>
-    </div>
-
-    <div class="legend">
-      <h3 data-i18n="legend.title">Umgesetzte Use Cases</h3>
-      <div class="uc">
-        <span>List hikes &middot; alle</span><span>Show comments &middot; Reader+</span><span>Add comment &middot; Reader+</span>
-        <span>Create hike &middot; Admin</span><span>Update hike &middot; Admin</span><span>Delete hike &middot; Admin</span>
-        <span>Delete comment &middot; Admin</span><span>Upload image &middot; Admin</span><span>Login</span>
-      </div>
     </div>
 
     <div class="toolbar">

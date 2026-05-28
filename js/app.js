@@ -663,6 +663,19 @@ async function loadAndRender () {
   try { state.hikes = await getAllHikes() } catch (e) { state.hikes = []; showError(e, 'toast.notFound') }
   state.loading = false
   renderList()
+  dismissSplash()
+}
+
+function dismissSplash () {
+  const s = document.getElementById('splash')
+  if (!s || s.dataset.dismissed === '1') return
+  s.dataset.dismissed = '1'
+  const minTime = 1300
+  const wait = Math.max(0, minTime - (Date.now() - (window.__splashStarted || Date.now())))
+  setTimeout(() => {
+    s.classList.add('gone')
+    setTimeout(() => s.remove(), 600)
+  }, wait)
 }
 
 function wireEvents () {
@@ -682,4 +695,5 @@ applyDomTranslations()
 wireEvents()
 renderSession()
 renderFilterBar()
+setTimeout(dismissSplash, 4000)
 loadAndRender()
