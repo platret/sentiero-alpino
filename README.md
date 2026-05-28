@@ -201,7 +201,7 @@ hike-frontend/
 
 ## 🛡 Security
 
-- 🧠 **Credentials in memory.** No `localStorage`, no `sessionStorage`, no DOM, no logs. Cleared on logout.
+- 🧠 **Credentials in `sessionStorage` only.** Survive a tab refresh, never touch `localStorage`, never reach the DOM, never get logged. Cleared on logout and when the tab closes.
 - 🚫 **Password never leaves the form.** Never serialized, never echoed, never sent to `createdBy`.
 - 🧹 **XSS-safe rendering.** Every piece of user content goes through `textContent`. Zero `innerHTML` on user data.
 - 🪪 **Role re-check before every protected call.** UI hiding is a hint, not a gate.
