@@ -2,7 +2,25 @@ export const BASE_URL = 'https://it-university.ch/hike'
 export const API = BASE_URL + '/resources/hike'
 export const IMG_BASE = BASE_URL + '/img/'
 
-const session = { user: null, role: 'GUEST', basic: null }
+const SESSION_KEY = 'sentiero.session'
+const session = restoreSession()
+
+function restoreSession () {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    if (!raw) return { user: null, role: 'GUEST', basic: null }
+    const s = JSON.parse(raw)
+    if (s && s.basic && s.user && s.role) return { user: s.user, role: s.role, basic: s.basic }
+  } catch (e) {}
+  return { user: null, role: 'GUEST', basic: null }
+}
+
+function persistSession () {
+  try {
+    if (session.basic) sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    else sessionStorage.removeItem(SESSION_KEY)
+  } catch (e) {}
+}
 
 export function getSession () {
   return { user: session.user, role: session.role }
@@ -67,6 +85,7 @@ export async function login (user, pass) {
   session.user = user
   session.role = role
   session.basic = basic
+  persistSession()
   return role
 }
 
@@ -74,6 +93,7 @@ export function logout () {
   session.user = null
   session.role = 'GUEST'
   session.basic = null
+  persistSession()
 }
 
 export async function reset () {
