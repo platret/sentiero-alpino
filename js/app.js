@@ -372,7 +372,11 @@ function rerenderComments (root, head, hikeNr, list) {
   const sorted = sortedComments(list)
   if (!sorted.length) root.appendChild(el('div', { class: 'empty', text: t('comments.empty') }))
   else for (const c of sorted) root.appendChild(renderCommentCard(c))
-  root.appendChild(renderCommentForm(hikeNr))
+  if (isAdmin()) {
+    root.appendChild(el('div', { class: 'empty', text: t('comments.adminNotice') }))
+  } else if (isReader()) {
+    root.appendChild(renderCommentForm(hikeNr))
+  }
 }
 
 function renderCommentCard (c) {
@@ -657,11 +661,15 @@ function doLogout () {
   renderList()
 }
 
-async function loadAndRender () {
+async function loadAndRender (opts) {
+  const fromButton = opts && opts.fromButton
+  const btn = document.getElementById('reloadBtn')
   state.loading = true
-  renderSkeleton()
+  if (btn) btn.classList.add('spinning')
+  if (!fromButton) renderSkeleton()
   try { state.hikes = await getAllHikes() } catch (e) { state.hikes = []; showError(e, 'toast.notFound') }
   state.loading = false
+  if (btn) setTimeout(() => btn.classList.remove('spinning'), fromButton ? 350 : 0)
   renderList()
   dismissSplash()
 }
@@ -682,6 +690,7 @@ function wireEvents () {
   $('#lgSubmit').addEventListener('click', doLogin)
   $('#hmSubmit').addEventListener('click', saveHike)
   $('#newBtn').addEventListener('click', () => openHikeForm())
+  $('#reloadBtn').addEventListener('click', () => loadAndRender({ fromButton: true }))
   for (const id of ['f_dist', 'f_h', 'f_m']) document.getElementById(id).addEventListener('input', updateSpeedPill)
   document.addEventListener('lang:change', () => {
     applyDomTranslations()

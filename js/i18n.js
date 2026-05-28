@@ -4,6 +4,9 @@ const DICT = {
     'nav.login': 'Anmelden',
     'nav.logout': 'Abmelden',
     'nav.newHike': '+ Neue Wanderung',
+    'nav.reload': 'Aktualisieren',
+    'nav.reloadAria': 'Wanderungen neu laden',
+    'comments.adminNotice': 'Admins können laut API keine Kommentare erfassen, nur löschen.',
     'hero.eyebrow': 'Schweizerischer Nationalpark',
     'hero.title': 'Wanderungen',
     'hero.lead': 'Entdecke, erfasse und verwalte Bergwanderungen. Modul M294 – Frontend mit Live-API.',
@@ -116,6 +119,9 @@ const DICT = {
     'nav.login': 'Accedi',
     'nav.logout': 'Esci',
     'nav.newHike': '+ Nuova escursione',
+    'nav.reload': 'Aggiorna',
+    'nav.reloadAria': 'Ricarica le escursioni',
+    'comments.adminNotice': 'Gli Admin non possono inserire commenti (solo eliminarli) secondo l\'API.',
     'hero.eyebrow': 'Parco Nazionale Svizzero',
     'hero.title': 'Escursioni',
     'hero.lead': 'Scopri, registra e gestisci escursioni in montagna. Modulo M294 – Frontend con API live.',
@@ -228,6 +234,9 @@ const DICT = {
     'nav.login': 'Se connecter',
     'nav.logout': 'Se déconnecter',
     'nav.newHike': '+ Nouvelle randonnée',
+    'nav.reload': 'Actualiser',
+    'nav.reloadAria': 'Recharger les randonnées',
+    'comments.adminNotice': 'Les Admins ne peuvent pas écrire de commentaires (seulement les supprimer) selon l\'API.',
     'hero.eyebrow': 'Parc national suisse',
     'hero.title': 'Randonnées',
     'hero.lead': 'Découvre, enregistre et gère des randonnées en montagne. Module M294 – Frontend avec API en direct.',
@@ -369,4 +378,5 @@ export function applyDomTranslations () {
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml) })
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder) })
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)) })
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.setAttribute('title', t(el.dataset.i18nTitle)) })
 }

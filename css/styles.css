@@ -66,6 +66,11 @@ header{position:sticky;top:0;z-index:1040;background:var(--header-bg);color:var(
 .btn-del:hover,.btn-del:focus{background:var(--rust);color:#fff}
 .btn-icon{background:transparent;color:var(--header-fg);border:2px solid #ffffff33;width:40px;height:40px;border-radius:8px;display:inline-grid;place-items:center;font-size:18px;transition:.15s;padding:0}
 .btn-icon:hover,.btn-icon:focus{border-color:var(--gold);color:var(--gold)}
+.btn-reload{background:var(--surface);color:var(--text);border:1.5px solid var(--border);width:44px;height:44px;border-radius:8px;display:inline-grid;place-items:center;transition:.15s;padding:0;cursor:pointer}
+.btn-reload:hover,.btn-reload:focus{border-color:var(--pine);color:var(--rust);transform:rotate(-15deg)}
+.btn-reload.spinning{pointer-events:none;color:var(--rust);border-color:var(--rust)}
+.btn-reload.spinning svg{animation:spin .9s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 .langpick{display:inline-flex;background:#ffffff10;border:1px solid #ffffff33;border-radius:8px;padding:2px;gap:2px}
 .langpick button{padding:6px 9px;border-radius:6px;background:transparent;color:var(--header-fg);font-size:12px;font-weight:700;letter-spacing:.06em;border:none;cursor:pointer}
 .langpick button[aria-pressed="true"]{background:var(--gold);color:#1f3d2e}
