@@ -18,9 +18,7 @@ function fmtTime (time) {
   return h + ' h ' + String(m).padStart(2, '0') + ' min'
 }
 
-function stars (n) {
-  return '★'.repeat(n) + '☆'.repeat(5 - n)
-}
+function stars (n) { return '★'.repeat(n) + '☆'.repeat(5 - n) }
 
 function el (tag, props, ...children) {
   const node = document.createElement(tag)
@@ -44,17 +42,27 @@ function el (tag, props, ...children) {
 
 function peaks (level) {
   const wrap = el('span', { class: 'peaks', 'aria-label': t('chip.difficulty') + ' ' + level + '/5' })
-  for (let i = 1; i <= 5; i++) {
-    const pk = el('span', { class: 'pk l' + i + (i <= level ? ' on' : '') })
-    wrap.appendChild(pk)
-  }
+  for (let i = 1; i <= 5; i++) wrap.appendChild(el('span', { class: 'pk l' + i + (i <= level ? ' on' : '') }))
   return wrap
 }
 
-function toast (titleKey, kind, sub, titleVars) {
+function showModal (id) {
+  const node = document.getElementById(id)
+  if (!node) return
+  window.bootstrap.Modal.getOrCreateInstance(node).show()
+}
+
+function hideModal (id) {
+  const node = document.getElementById(id)
+  if (!node) return
+  const inst = window.bootstrap.Modal.getInstance(node)
+  if (inst) inst.hide()
+}
+
+function toast (title, kind, sub) {
   const root = $('#toast')
-  const tt = el('div', { class: 't ' + (kind || 'info') })
-  tt.appendChild(document.createTextNode(typeof titleKey === 'string' && titleKey.indexOf('.') !== -1 ? t(titleKey, titleVars) : titleKey))
+  const tt = el('div', { class: 't ' + (kind || 'info'), role: 'status' })
+  tt.appendChild(document.createTextNode(title))
   if (sub) {
     const s = document.createElement('small')
     s.textContent = sub
@@ -66,12 +74,9 @@ function toast (titleKey, kind, sub, titleVars) {
 
 function showError (err, fallbackKey) {
   const status = err && err.status
-  const msg = (err && err.message) || 'Unbekannter Fehler'
+  const msg = (err && err.message) || 'Error'
   toast(t(fallbackKey || 'toast.notFound'), 'err', status ? msg + ' (' + status + ')' : msg)
 }
-
-function openModal (id) { $('#' + id).classList.add('show') }
-function closeModal (id) { $('#' + id).classList.remove('show') }
 
 function renderSession () {
   const s = getSession()
@@ -80,23 +85,24 @@ function renderSession () {
 
   if (s.role === 'GUEST') {
     root.appendChild(el('span', { class: 'badge b-guest', text: t('nav.guest') }))
-    root.appendChild(el('button', { class: 'btn btn-ghost btn-sm', text: t('nav.login'), onclick: () => openModal('loginModal') }))
+    root.appendChild(el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: t('nav.login'), onclick: () => showModal('loginModal') }))
   } else {
     const cls = s.role === 'ADMIN' ? 'b-admin' : 'b-reader'
     root.appendChild(el('span', { class: 'badge ' + cls, text: s.user + ' · ' + s.role }))
-    root.appendChild(el('button', { class: 'btn btn-ghost btn-sm', text: t('nav.logout'), onclick: doLogout }))
+    root.appendChild(el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: t('nav.logout'), onclick: doLogout }))
   }
 
-  const langPick = el('div', { class: 'langpick', 'aria-label': t('lang.toggle') })
+  const langPick = el('div', { class: 'langpick', role: 'group', 'aria-label': t('lang.toggle') })
   for (const lg of listLangs()) {
-    const b = el('button', { text: lg.toUpperCase(), onclick: () => setLang(lg) })
+    const b = el('button', { type: 'button', text: lg.toUpperCase(), onclick: () => setLang(lg) })
     if (getLang() === lg) b.setAttribute('aria-pressed', 'true')
     langPick.appendChild(b)
   }
   root.appendChild(langPick)
 
   const themeBtn = el('button', {
-    class: 'btn-icon', 'aria-label': t('theme.toggle'), title: t('theme.toggle'),
+    class: 'btn-icon', type: 'button',
+    'aria-label': t('theme.toggle'), title: t('theme.toggle'),
     text: getTheme() === 'dark' ? '☀' : '☾',
     onclick: () => { toggleTheme(); renderSession() }
   })
@@ -112,7 +118,7 @@ function renderFilterBar () {
 
   const row1 = el('div', { class: 'filter-row' })
   const search = el('div', { class: 'search fr-grow' })
-  const input = el('input', { type: 'search', placeholder: t('filter.search'), value: f.q })
+  const input = el('input', { type: 'search', class: 'form-control', placeholder: t('filter.search'), value: f.q, 'aria-label': t('filter.search') })
   let debounce
   input.addEventListener('input', e => {
     clearTimeout(debounce)
@@ -121,35 +127,32 @@ function renderFilterBar () {
   search.appendChild(input)
   row1.appendChild(search)
 
+  const sortWrap = el('div', { class: 'd-flex align-items-center gap-2' })
+  sortWrap.appendChild(el('span', { class: 'filter-label', text: t('filter.sort') }))
   const sortSel = el('select', { class: 'fselect' })
-  const sortOpts = [['nr', 'filter.sort.nr'], ['name', 'filter.sort.name'], ['distance', 'filter.sort.distance'], ['duration', 'filter.sort.duration'], ['difficulty', 'filter.sort.difficulty']]
-  for (const [v, k] of sortOpts) {
+  for (const [v, k] of [['nr', 'filter.sort.nr'], ['name', 'filter.sort.name'], ['distance', 'filter.sort.distance'], ['duration', 'filter.sort.duration'], ['difficulty', 'filter.sort.difficulty']]) {
     const op = el('option', { value: v, text: t(k) })
     if (f.sort === v) op.selected = true
     sortSel.appendChild(op)
   }
   sortSel.addEventListener('change', e => { setFilters({ sort: e.target.value }); renderList() })
-  const sortWrap = el('label', { class: 'toggle', style: 'gap:8px' })
-  sortWrap.appendChild(el('span', { class: 'filter-label', text: t('filter.sort') }))
   sortWrap.appendChild(sortSel)
   row1.appendChild(sortWrap)
-
   root.appendChild(row1)
 
   const row2 = el('div', { class: 'filter-row' })
-
   row2.appendChild(el('span', { class: 'filter-label', text: t('filter.diffLabel') }))
   const diffChips = el('div', { class: 'chips' })
   for (let i = 1; i <= 5; i++) {
     const on = f.diff.indexOf(i) !== -1
     const btn = el('button', {
-      class: 'chip-btn',
+      class: 'chip-btn', type: 'button',
       onclick: () => {
         const cur = getFilters().diff.slice()
         const idx = cur.indexOf(i)
         if (idx === -1) cur.push(i); else cur.splice(idx, 1)
         setFilters({ diff: cur.sort() })
-        renderList()
+        renderFilterBar(); renderList()
       }
     })
     btn.appendChild(peaks(i))
@@ -159,7 +162,7 @@ function renderFilterBar () {
   }
   row2.appendChild(diffChips)
 
-  row2.appendChild(el('span', { class: 'filter-label', text: t('filter.duration'), style: 'margin-left:8px' }))
+  row2.appendChild(el('span', { class: 'filter-label ms-2', text: t('filter.duration') }))
   const durSel = el('select', { class: 'fselect' })
   for (const [v, k] of [['all', 'filter.dur.all'], ['short', 'filter.dur.short'], ['mid', 'filter.dur.mid'], ['long', 'filter.dur.long'], ['xlong', 'filter.dur.xlong']]) {
     const op = el('option', { value: v, text: t(k) })
@@ -180,14 +183,11 @@ function renderFilterBar () {
     row2.appendChild(lbl)
   }
 
-  const hits = el('span', { class: 'hits', id: 'hits' })
-  row2.appendChild(hits)
+  row2.appendChild(el('span', { class: 'hits', id: 'hits' }))
 
   if (isActive()) {
-    const reset = el('button', { class: 'reset-btn', text: t('filter.reset'), onclick: () => { resetFilters(); renderFilterBar(); renderList() } })
-    row2.appendChild(reset)
+    row2.appendChild(el('button', { class: 'reset-btn', type: 'button', text: t('filter.reset'), onclick: () => { resetFilters(); renderFilterBar(); renderList() } }))
   }
-
   root.appendChild(row2)
 }
 
@@ -225,13 +225,11 @@ function renderList () {
     const empty = el('div', { class: 'empty' })
     empty.appendChild(document.createTextNode(t('list.empty.noResults')))
     empty.appendChild(el('br'))
-    empty.appendChild(el('button', { class: 'btn btn-ln btn-sm', text: t('filter.reset'), onclick: () => { resetFilters(); renderFilterBar(); renderList() } }))
+    empty.appendChild(el('button', { class: 'btn btn-ln btn-sm', type: 'button', text: t('filter.reset'), onclick: () => { resetFilters(); renderFilterBar(); renderList() } }))
     grid.appendChild(empty)
     return
   }
-  for (const h of filtered) {
-    grid.appendChild(renderCard(h))
-  }
+  for (const h of filtered) grid.appendChild(renderCard(h))
 }
 
 function renderCard (h) {
@@ -241,9 +239,7 @@ function renderCard (h) {
     const img = el('img', { alt: t('detail.elev') + ' ' + h.name, loading: 'lazy', src: IMG_BASE + encodeURIComponent(h.imageElevation) })
     img.onerror = () => { thumb.classList.add('thumb-missing'); img.remove() }
     thumb.appendChild(img)
-  } else {
-    thumb.classList.add('thumb-missing')
-  }
+  } else thumb.classList.add('thumb-missing')
   card.appendChild(thumb)
 
   const top = el('div', { class: 'top' })
@@ -274,10 +270,10 @@ function renderCard (h) {
   card.appendChild(el('div', { class: 'by', text: t('card.createdBy', { nr: h.nr, user: (h.createdBy && h.createdBy.username) || '–' }) }))
 
   const foot = el('div', { class: 'foot' })
-  foot.appendChild(el('button', { class: 'btn btn-pri btn-sm', text: t('card.details'), onclick: () => openDetail(h.nr) }))
+  foot.appendChild(el('button', { class: 'btn btn-pri btn-sm', type: 'button', text: t('card.details'), onclick: () => openDetail(h.nr) }))
   if (isAdmin()) {
-    foot.appendChild(el('button', { class: 'btn btn-ln btn-sm', text: t('card.edit'), onclick: () => openHikeForm(h.nr) }))
-    foot.appendChild(el('button', { class: 'btn btn-del btn-sm', text: t('card.delete'), onclick: () => onDeleteHike(h.nr) }))
+    foot.appendChild(el('button', { class: 'btn btn-ln btn-sm', type: 'button', text: t('card.edit'), onclick: () => openHikeForm(h.nr) }))
+    foot.appendChild(el('button', { class: 'btn btn-del btn-sm', type: 'button', text: t('card.delete'), onclick: () => onDeleteHike(h.nr) }))
   }
   card.appendChild(foot)
   return card
@@ -289,7 +285,7 @@ async function openDetail (nr) {
   try { h = await getHike(nr) } catch (e) { showError(e, 'toast.notFound'); return }
   const d = $('#detailView')
   d.innerHTML = ''
-  d.appendChild(el('button', { class: 'back', text: t('detail.back'), onclick: closeDetail }))
+  d.appendChild(el('button', { class: 'back', type: 'button', text: t('detail.back'), onclick: closeDetail }))
 
   const dgrid = el('div', { class: 'dgrid' })
   const elev = el('div', { class: 'elev' })
@@ -310,7 +306,7 @@ async function openDetail (nr) {
   facts.appendChild(factBox(t('detail.speed'), speed(h.distance, h.time[0], h.time[1]).toFixed(2) + ' km/h'))
   dinfo.appendChild(facts)
   if (h.description) dinfo.appendChild(el('div', { class: 'desc', text: h.description }))
-  else dinfo.appendChild(el('div', { class: 'hint', text: t('detail.noDesc') }))
+  else dinfo.appendChild(el('div', { class: 'form-text', text: t('detail.noDesc') }))
   dgrid.appendChild(dinfo)
   d.appendChild(dgrid)
 
@@ -332,9 +328,7 @@ async function openDetail (nr) {
     const list = await getComments(nr)
     state.comments = list
     renderCommentsInto(comments, head, nr, list)
-  } catch (e) {
-    showError(e, 'toast.notFound')
-  }
+  } catch (e) { showError(e, 'toast.notFound') }
 }
 
 function factBox (l, v) {
@@ -358,19 +352,16 @@ function sortedComments (list) {
 
 function renderCommentsInto (root, head, hikeNr, list) {
   while (head.children.length > 1) head.removeChild(head.lastChild)
+  const wrap = el('div', { class: 'd-flex gap-2 align-items-center' })
+  wrap.appendChild(el('span', { class: 'filter-label', text: t('comments.sortLabel') }))
   const sortSel = el('select', { class: 'fselect' })
   for (const [v, k] of [['new', 'comments.sort.new'], ['old', 'comments.sort.old'], ['ratingHigh', 'comments.sort.ratingHigh'], ['ratingLow', 'comments.sort.ratingLow']]) {
     const op = el('option', { value: v, text: t(k) })
     if (state.commentSort === v) op.selected = true
     sortSel.appendChild(op)
   }
-  sortSel.addEventListener('change', e => {
-    state.commentSort = e.target.value
-    rerenderComments(root, head, hikeNr, list)
-  })
-  const lbl = el('span', { class: 'filter-label', text: t('comments.sortLabel') })
-  const wrap = el('div', { style: 'display:flex;gap:8px;align-items:center' })
-  wrap.appendChild(lbl); wrap.appendChild(sortSel)
+  sortSel.addEventListener('change', e => { state.commentSort = e.target.value; rerenderComments(root, head, hikeNr, list) })
+  wrap.appendChild(sortSel)
   head.appendChild(wrap)
 
   rerenderComments(root, head, hikeNr, list)
@@ -380,9 +371,7 @@ function rerenderComments (root, head, hikeNr, list) {
   while (root.children.length > 1) root.removeChild(root.lastChild)
   const sorted = sortedComments(list)
   if (!sorted.length) root.appendChild(el('div', { class: 'empty', text: t('comments.empty') }))
-  else {
-    for (const c of sorted) root.appendChild(renderCommentCard(c))
-  }
+  else for (const c of sorted) root.appendChild(renderCommentCard(c))
   root.appendChild(renderCommentForm(hikeNr))
 }
 
@@ -396,18 +385,17 @@ function renderCommentCard (c) {
   const ch2 = el('div', { class: 'ch' })
   const who = c.createdBy ? (c.createdBy.username + ' · ' + c.createdBy.userRole) : '–'
   ch2.appendChild(el('span', { class: 'cby', text: who }))
-  if (isAdmin()) ch2.appendChild(el('button', { class: 'btn btn-del btn-sm', text: t('card.delete'), onclick: () => onDeleteComment(c.nr) }))
+  if (isAdmin()) ch2.appendChild(el('button', { class: 'btn btn-del btn-sm', type: 'button', text: t('card.delete'), onclick: () => onDeleteComment(c.nr) }))
   cmt.appendChild(ch2)
 
   const rxRow = el('div', { class: 'reactions', 'aria-label': t('reactions.label') })
   const tok = userToken(getSession().user)
   const counts = getReactions(c.nr)
   for (const e of EMOJIS) {
-    const cnt = counts[e]
     const btn = el('button', { class: 'rx', type: 'button', onclick: () => onReact(c.nr, e, btn) })
     if (hasReacted(c.nr, e, tok)) btn.setAttribute('aria-pressed', 'true')
     btn.appendChild(document.createTextNode(e))
-    if (cnt > 0) btn.appendChild(el('span', { class: 'ct', text: cnt }))
+    if (counts[e] > 0) btn.appendChild(el('span', { class: 'ct', text: counts[e] }))
     rxRow.appendChild(btn)
   }
   cmt.appendChild(rxRow)
@@ -429,31 +417,31 @@ function onReact (commentNr, emoji, btn) {
 function renderCommentForm (hikeNr) {
   const form = el('div', { class: 'cmt', style: 'border-style:dashed' })
   form.appendChild(el('h4', { text: t('comments.formTitle'), style: 'margin-bottom:10px' }))
-  form.appendChild(field(t('comments.fieldTitle'), 'input', 'c_title'))
-  form.appendChild(field(t('comments.fieldText'), 'textarea', 'c_text'))
-  const fR = field(t('comments.fieldRating'), 'select', 'c_rating', ['', '1', '2', '3', '4', '5'])
-  fR.style.maxWidth = '160px'
+  form.appendChild(bsField('c_title', 'input', t('comments.fieldTitle')))
+  form.appendChild(bsField('c_text', 'textarea', t('comments.fieldText')))
+  const fR = bsField('c_rating', 'select', t('comments.fieldRating'), ['', '1', '2', '3', '4', '5'])
+  fR.style.maxWidth = '180px'
   form.appendChild(fR)
-  form.appendChild(el('button', { class: 'btn btn-pri btn-sm', text: t('comments.submit'), onclick: () => onAddComment(hikeNr) }))
+  form.appendChild(el('button', { class: 'btn btn-pri btn-sm mt-2', type: 'button', text: t('comments.submit'), onclick: () => onAddComment(hikeNr) }))
   return form
 }
 
-function field (label, kind, id, options) {
-  const f = el('div', { class: 'field' })
-  f.appendChild(el('label', { text: label }))
+function bsField (id, kind, label, options) {
+  const f = el('div', { class: 'mb-3' })
+  f.appendChild(el('label', { class: 'form-label', for: id, text: label }))
   let input
-  if (kind === 'textarea') input = document.createElement('textarea')
+  if (kind === 'textarea') { input = document.createElement('textarea'); input.className = 'form-control' }
   else if (kind === 'select') {
-    input = document.createElement('select')
+    input = document.createElement('select'); input.className = 'form-select'
     for (const o of options) {
       const op = document.createElement('option')
       op.value = o; op.textContent = o || '…'
       input.appendChild(op)
     }
-  } else input = document.createElement('input')
+  } else { input = document.createElement('input'); input.className = 'form-control' }
   input.id = id
   f.appendChild(input)
-  f.appendChild(el('div', { class: 'err' }))
+  f.appendChild(el('div', { class: 'invalid-feedback' }))
   return f
 }
 
@@ -464,24 +452,18 @@ function closeDetail () {
 }
 
 function setFieldError (input, msg) {
-  const f = input.closest('.field')
-  if (!f) return
-  const e = f.querySelector('.err')
+  if (!input) return
   if (msg) {
-    f.classList.add('bad')
-    if (e) { e.textContent = msg; e.classList.add('show') }
+    input.classList.add('is-invalid')
+    const fb = input.parentElement.querySelector('.invalid-feedback')
+    if (fb) fb.textContent = msg
   } else {
-    f.classList.remove('bad')
-    if (e) e.classList.remove('show')
+    input.classList.remove('is-invalid')
   }
 }
 
 function clearFormErrors (sel) {
-  document.querySelectorAll(sel + ' .field').forEach(f => {
-    f.classList.remove('bad')
-    const e = f.querySelector('.err')
-    if (e) e.classList.remove('show')
-  })
+  document.querySelectorAll(sel + ' .is-invalid').forEach(n => n.classList.remove('is-invalid'))
 }
 
 async function onAddComment (hikeNr) {
@@ -506,9 +488,7 @@ async function onAddComment (hikeNr) {
     await addComment(payload)
     toast(t('toast.commentAdded'), 'ok', 'POST 200')
     openDetail(hikeNr)
-  } catch (e) {
-    showError(e, 'toast.commentAdded')
-  }
+  } catch (e) { showError(e, 'toast.commentAdded') }
 }
 
 function stripHike (h) {
@@ -528,9 +508,7 @@ async function onDeleteComment (nr) {
     dropComment(nr)
     toast(t('toast.commentDeleted'), 'ok', 'DELETE 200')
     if (state.openHike) openDetail(state.openHike)
-  } catch (e) {
-    showError(e, 'toast.commentDeleted')
-  }
+  } catch (e) { showError(e, 'toast.commentDeleted') }
 }
 
 async function onDeleteHike (nr) {
@@ -543,9 +521,7 @@ async function onDeleteHike (nr) {
     toast(t('toast.deleted'), 'ok', 'DELETE 200 · ' + h.name)
     if (state.openHike === nr) closeDetail()
     await loadAndRender()
-  } catch (e) {
-    showError(e, 'toast.deleted')
-  }
+  } catch (e) { showError(e, 'toast.deleted') }
 }
 
 function openHikeForm (nr) {
@@ -566,7 +542,7 @@ function openHikeForm (nr) {
   $('#f_end').value = f ? f.end : ''
   $('#f_img').value = ''
   updateSpeedPill()
-  openModal('hikeModal')
+  showModal('hikeModal')
 }
 
 function updateSpeedPill () {
@@ -582,7 +558,7 @@ function updateSpeedPill () {
   const sp = speed(dist, h, m)
   const ok = sp >= 2 && sp <= 4
   pill.style.display = 'inline-block'
-  pill.className = 'speed-pill ' + (ok ? 'ok' : 'bad')
+  pill.className = 'speed-pill mt-2 ' + (ok ? 'ok' : 'bad')
   pill.textContent = t(ok ? 'speedPill.ok' : 'speedPill.bad', { v: sp.toFixed(2) })
 }
 
@@ -619,7 +595,7 @@ async function saveHike () {
   if (errors.description) setFieldError($('#f_desc'), errors.description)
   if (errors.difficulty) setFieldError($('#f_diff'), errors.difficulty)
   if (errors.distance) setFieldError($('#f_dist'), errors.distance)
-  if (errors.time) setFieldError($('#f_h'), errors.time)
+  if (errors.time) { setFieldError($('#f_h'), errors.time); setFieldError($('#f_m'), errors.time) }
   if (errors.start) setFieldError($('#f_start'), errors.start)
   if (errors.end) setFieldError($('#f_end'), errors.end)
   if (errors.imageElevation) setFieldError($('#f_img'), errors.imageElevation)
@@ -639,29 +615,28 @@ async function saveHike () {
   try {
     if (editing) { await updateHike(data); toast(t('toast.updated'), 'ok', 'PUT 200 · ' + name) }
     else { await createHike(data); toast(t('toast.created'), 'ok', 'POST 200 · ' + name) }
-    closeModal('hikeModal')
+    hideModal('hikeModal')
     await loadAndRender()
     if (state.openHike) openDetail(state.openHike)
-  } catch (e) {
-    showError(e, 'toast.created')
-  }
+  } catch (e) { showError(e, 'toast.created') }
 }
 
 async function doLogin () {
   const u = $('#lgUser').value.trim()
   const p = $('#lgPass').value
   const errs = validateLogin(u, p)
+  clearFormErrors('#loginModal')
+  $('#lgErr').classList.add('d-none')
   if (Object.keys(errs).length) {
-    $('#lgErr').textContent = errs.user || errs.pass
-    $('#lgErr').classList.add('show')
+    if (errs.user) setFieldError($('#lgUser'), errs.user)
+    if (errs.pass) setFieldError($('#lgPass'), errs.pass)
     return
   }
   try {
     const role = await login(u, p)
-    $('#lgErr').classList.remove('show')
     $('#lgUser').value = ''
     $('#lgPass').value = ''
-    closeModal('loginModal')
+    hideModal('loginModal')
     renderSession()
     renderFilterBar()
     await loadAndRender()
@@ -669,7 +644,7 @@ async function doLogin () {
     toast(t('toast.loggedIn', { user: u }), 'ok', role + ' · 200 OK')
   } catch (e) {
     $('#lgErr').textContent = e.message
-    $('#lgErr').classList.add('show')
+    $('#lgErr').classList.remove('d-none')
   }
 }
 
@@ -685,33 +660,19 @@ function doLogout () {
 async function loadAndRender () {
   state.loading = true
   renderSkeleton()
-  try {
-    state.hikes = await getAllHikes()
-  } catch (e) {
-    state.hikes = []
-    showError(e, 'toast.notFound')
-  }
+  try { state.hikes = await getAllHikes() } catch (e) { state.hikes = []; showError(e, 'toast.notFound') }
   state.loading = false
   renderList()
 }
 
 function wireEvents () {
   $('#lgSubmit').addEventListener('click', doLogin)
-  $('#lgCancel').addEventListener('click', () => closeModal('loginModal'))
   $('#hmSubmit').addEventListener('click', saveHike)
-  $('#hmCancel').addEventListener('click', () => closeModal('hikeModal'))
   $('#newBtn').addEventListener('click', () => openHikeForm())
-  for (const id of ['f_dist', 'f_h', 'f_m']) {
-    document.getElementById(id).addEventListener('input', updateSpeedPill)
-  }
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal('loginModal'); closeModal('hikeModal') }
-  })
+  for (const id of ['f_dist', 'f_h', 'f_m']) document.getElementById(id).addEventListener('input', updateSpeedPill)
   document.addEventListener('lang:change', () => {
     applyDomTranslations()
-    renderSession()
-    renderFilterBar()
-    renderList()
+    renderSession(); renderFilterBar(); renderList()
     if (state.openHike) openDetail(state.openHike)
   })
 }
