@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>API Test – Hike Frontend</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f4f0e6;color:#1f3d2e;padding:20px;max-width:1100px;margin:0 auto}
+h1{font-family:Georgia,serif;margin-bottom:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+input,select{padding:6px 9px;border:1.5px solid #d9d2c0;border-radius:6px;font-size:14px}
+button{padding:8px 14px;border:none;background:#8b2e2e;color:#fff;font-weight:600;border-radius:6px;cursor:pointer;font-size:13px}
+button:hover{background:#a8453f}
+button.run{background:#1f3d2e}
+button.run:hover{background:#2d543f}
+section{background:#fbf9f2;border:1px solid #d9d2c0;border-radius:10px;padding:14px;margin-bottom:14px}
+h2{font-size:16px;margin-bottom:8px}
+pre{background:#1f3d2e;color:#f4f0e6;padding:10px;border-radius:6px;font-size:12px;overflow:auto;max-height:240px;white-space:pre-wrap;word-break:break-word}
+.ok{color:#2d543f;font-weight:700}
+.err{color:#8b2e2e;font-weight:700}
+.status{font-family:monospace;font-size:13px}
+</style>
+</head>
+<body>
+<h1>API Test-Konsole</h1>
+<p>Jeder Button führt einen einzelnen Endpoint einmal aus und loggt Status + Response.</p>
+
+<section>
+  <h2>Auth</h2>
+  <div class="row">
+    <label>User <input id="u" value="Max"></label>
+    <label>Pass <input id="p" type="password" value="Stern3849"></label>
+    <button class="run" data-t="login">GET /login</button>
+    <button data-t="logout">Logout (local)</button>
+    <button class="run" data-t="badLogin">GET /login (Falsche Daten)</button>
+  </div>
+  <pre id="logAuth"></pre>
+</section>
+
+<section>
+  <h2>Hikes</h2>
+  <div class="row">
+    <button class="run" data-t="all">GET /all</button>
+    <label>Nr <input id="nr" type="number" value="1"></label>
+    <button class="run" data-t="one">GET /:nr</button>
+    <button class="run" data-t="oneMissing">GET /9999 (404)</button>
+    <button class="run" data-t="reset">GET /reset</button>
+  </div>
+  <pre id="logHikes"></pre>
+</section>
+
+<section>
+  <h2>Comments</h2>
+  <div class="row">
+    <label>Hike Nr <input id="cnr" type="number" value="1"></label>
+    <button class="run" data-t="comments">GET /:nr/comment</button>
+    <button class="run" data-t="commentsMissing">GET /9999/comment (404)</button>
+    <button class="run" data-t="addComment">POST /comment</button>
+    <label>Comment Nr <input id="delc" type="number" value="9999"></label>
+    <button class="run" data-t="delComment">DELETE /comment?nr=</button>
+  </div>
+  <pre id="logCmts"></pre>
+</section>
+
+<section>
+  <h2>Hike CRUD (Admin)</h2>
+  <div class="row">
+    <button class="run" data-t="createHike">POST / (neue Wanderung 1001)</button>
+    <button class="run" data-t="updateHike">PUT / (1001)</button>
+    <button class="run" data-t="delHike">DELETE /?nr=1001</button>
+    <button class="run" data-t="delHikeMissing">DELETE /?nr=9999 (400)</button>
+  </div>
+  <pre id="logCrud"></pre>
+</section>
+
+<section>
+  <h2>Image</h2>
+  <div class="row">
+    <input id="img" type="file" accept="image/jpeg">
+    <button class="run" data-t="upload">POST /image</button>
+  </div>
+  <pre id="logImg"></pre>
+</section>
+
+<script type="module">
+import * as api from '../js/api.js'
+
+const $ = s => document.querySelector(s)
+function log (where, status, body, kind) {
+  const pre = $(where)
+  const tag = kind === 'ok' ? 'ok' : 'err'
+  const ts = new Date().toLocaleTimeString()
+  const line = '[' + ts + '] <span class="' + tag + '">' + status + '</span> ' +
+    (typeof body === 'string' ? body : JSON.stringify(body, null, 2))
+  pre.innerHTML = line + '\n\n' + pre.innerHTML
+}
+
+async function run (kind) {
+  try {
+    if (kind === 'login') { const r = await api.login($('#u').value, $('#p').value); log('#logAuth', '200 OK', 'role=' + r, 'ok'); return }
+    if (kind === 'badLogin') { try { await api.login($('#u').value, 'WRONG_PW_xyz'); log('#logAuth', '?', 'unerwarteter Erfolg', 'err') } catch (e) { log('#logAuth', (e.status || '?') + ' ' + e.message, '', 'err') } return }
+    if (kind === 'logout') { api.logout(); log('#logAuth', '–', 'session cleared', 'ok'); return }
+    if (kind === 'all') { const r = await api.getAllHikes(); log('#logHikes', '200 OK', r, 'ok'); return }
+    if (kind === 'one') { const r = await api.getHike(parseInt($('#nr').value, 10)); log('#logHikes', '200 OK', r, 'ok'); return }
+    if (kind === 'oneMissing') { const r = await api.getHike(9999); log('#logHikes', '200 OK', r, 'ok'); return }
+    if (kind === 'reset') { const r = await api.reset(); log('#logHikes', r.status + ' OK', r.body, 'ok'); return }
+    if (kind === 'comments') { const r = await api.getComments(parseInt($('#cnr').value, 10)); log('#logCmts', '200 OK', r, 'ok'); return }
+    if (kind === 'commentsMissing') { const r = await api.getComments(9999); log('#logCmts', '200 OK', r, 'ok'); return }
+    if (kind === 'addComment') {
+      const h = await api.getHike(parseInt($('#cnr').value, 10))
+      const r = await api.addComment({
+        nr: 0,
+        title: 'Testkommentar #' + Date.now(),
+        text: 'Automatischer Kommentar aus Test-Konsole.',
+        rating: 4,
+        created: new Date().toISOString().slice(0, 19),
+        createdBy: { username: api.getSession().user, userRole: api.getSession().role },
+        hike: h
+      })
+      log('#logCmts', '200 OK', r, 'ok'); return
+    }
+    if (kind === 'delComment') { const r = await api.deleteComment(parseInt($('#delc').value, 10)); log('#logCmts', r.status + ' OK', r.body, 'ok'); return }
+    if (kind === 'createHike') {
+      const r = await api.createHike({
+        nr: 1001, name: 'Testroute', description: 'Eine zwei drei vier fünf', difficulty: 3,
+        distance: 6, time: [2, 30], imageElevation: 'route_19.jpg',
+        created: new Date().toISOString().slice(0, 19), start: 'A', end: 'B',
+        createdBy: { username: api.getSession().user, userRole: api.getSession().role }
+      })
+      log('#logCrud', '200 OK', r, 'ok'); return
+    }
+    if (kind === 'updateHike') {
+      const r = await api.updateHike({
+        nr: 1001, name: 'Testroute (geändert)', description: 'Eine zwei drei vier fünf', difficulty: 3,
+        distance: 6, time: [2, 30], imageElevation: 'route_19.jpg',
+        created: new Date().toISOString().slice(0, 19), start: 'A', end: 'B',
+        createdBy: { username: api.getSession().user, userRole: api.getSession().role }
+      })
+      log('#logCrud', '200 OK', r, 'ok'); return
+    }
+    if (kind === 'delHike') { const r = await api.deleteHike(1001); log('#logCrud', r.status + ' OK', r.body, 'ok'); return }
+    if (kind === 'delHikeMissing') { const r = await api.deleteHike(9999); log('#logCrud', r.status + ' OK', r.body, 'ok'); return }
+    if (kind === 'upload') {
+      const file = $('#img').files[0]
+      if (!file) { log('#logImg', '–', 'Keine Datei ausgewählt', 'err'); return }
+      const r = await api.uploadImage(file)
+      log('#logImg', r.status + ' OK', r.body, 'ok'); return
+    }
+  } catch (e) {
+    const where = kind.includes('omment') ? '#logCmts'
+      : (kind === 'upload' ? '#logImg'
+        : (kind.includes('Hike') || kind === 'createHike' || kind === 'updateHike' ? '#logCrud'
+          : (kind === 'login' || kind === 'logout' || kind === 'badLogin' ? '#logAuth' : '#logHikes')))
+    log(where, (e.status || 'ERR') + ' ' + e.message, e.body || '', 'err')
+  }
+}
+
+document.querySelectorAll('button[data-t]').forEach(b => b.addEventListener('click', () => run(b.dataset.t)))
+</script>
+</body>
+</html>

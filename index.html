@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wanderungen – SentieroAlpino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div class="logo"><span class="mk">&#9650;</span> SentieroAlpino</div>
+    <div class="session" id="session"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="listView">
+    <div class="hero">
+      <div class="eyebrow">Schweizerischer Nationalpark</div>
+      <h1>Wanderungen</h1>
+      <p>Entdecke, erfasse und verwalte Bergwanderungen. Modul M294 – Frontend mit Live-API.</p>
+    </div>
+
+    <div class="legend">
+      <h3>Umgesetzte Use Cases</h3>
+      <div class="uc">
+        <span>List hikes &middot; alle</span><span>Show comments &middot; Reader+</span><span>Add comment &middot; Reader+</span>
+        <span>Create hike &middot; Admin</span><span>Update hike &middot; Admin</span><span>Delete hike &middot; Admin</span>
+        <span>Delete comment &middot; Admin</span><span>Upload image &middot; Admin</span><span>Login</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div><div class="eyebrow" style="color:var(--stone)">Übersicht</div><h2 style="font-size:28px" id="count"></h2></div>
+      <button class="btn btn-pri" id="newBtn" style="display:none">+ Neue Wanderung</button>
+    </div>
+    <div class="grid" id="hikeGrid"></div>
+  </section>
+
+  <section id="detailView" class="detail"></section>
+</main>
+
+<div class="modal" id="loginModal">
+  <div class="sheet sm">
+    <h2>Anmelden</h2>
+    <p class="lead">Login ist nötig für Kommentare und Verwaltung.</p>
+    <div class="users-hint">Test-Logins:<br><b>Max</b> / Stern3849 (Admin) &nbsp;&mdash;&nbsp; <b>Berta</b> / Sonne2024 (Reader)</div>
+    <div class="field"><label>Benutzername</label><input id="lgUser" placeholder="Max"></div>
+    <div class="field"><label>Passwort</label><input id="lgPass" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;"></div>
+    <div class="err" id="lgErr">Login fehlgeschlagen.</div>
+    <div class="actions">
+      <button class="btn btn-ln" id="lgCancel">Abbrechen</button>
+      <button class="btn btn-pri" id="lgSubmit">Anmelden</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="hikeModal">
+  <div class="sheet">
+    <h2 id="hmTitle">Neue Wanderung</h2>
+    <p class="lead">Pflichtfelder ausser Beschreibung. Geschwindigkeit muss 2&ndash;4 km/h ergeben.</p>
+    <form id="hikeForm" onsubmit="return false">
+      <div class="row2">
+        <div class="field"><label>Nr (PK, &ge; 1000)</label><input id="f_nr" type="number" min="1000"><div class="err">Nummer &ge; 1000 erforderlich.</div></div>
+        <div class="field"><label>Schwierigkeit (1&ndash;5)</label>
+          <select id="f_diff"><option value="">w&auml;hlen&hellip;</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+          <div class="err">Wert 1&ndash;5 erforderlich.</div></div>
+      </div>
+      <div class="field"><label>Name</label><input id="f_name" placeholder="Val Min&egrave;r"><div class="err">Name ist erforderlich.</div></div>
+      <div class="field"><label>Beschreibung <span class="opt">(optional, min. 5 W&ouml;rter)</span></label>
+        <textarea id="f_desc" placeholder="Optionaler Text&hellip;"></textarea>
+        <div class="hint">Leer erlaubt. Falls erfasst: mindestens 5 W&ouml;rter.</div>
+        <div class="err">Falls erfasst, sind mindestens 5 W&ouml;rter n&ouml;tig.</div></div>
+      <div class="row2">
+        <div class="field"><label>Distanz (km)</label><input id="f_dist" type="number" step="0.1" min="0.1" placeholder="5.5"><div class="err">Distanz &gt; 0 erforderlich.</div></div>
+        <div class="field"><label>Dauer (Std : Min)</label>
+          <div class="row2"><input id="f_h" type="number" min="0" max="23" placeholder="2"><input id="f_m" type="number" min="0" max="59" placeholder="15"></div>
+          <div class="err">Geschwindigkeit muss 2&ndash;4 km/h sein.</div></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Start</label><input id="f_start" placeholder="Pradatsch"><div class="err">Start ist erforderlich.</div></div>
+        <div class="field"><label>Ziel</label><input id="f_end" placeholder="Sur il Foss"><div class="err">Ziel ist erforderlich.</div></div>
+      </div>
+      <div class="field"><label>H&ouml;henprofil-Bild (JPG-Upload)</label><input id="f_img" type="file" accept="image/jpeg"><div class="hint">Use Case &bdquo;upload image&ldquo;. Speichert den Dateinamen.</div><div class="err">Bild ist erforderlich.</div></div>
+      <div class="actions">
+        <button type="button" class="btn btn-ln" id="hmCancel">Abbrechen</button>
+        <button type="button" class="btn btn-pri" id="hmSubmit">Speichern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

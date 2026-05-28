@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" role="img" aria-label="Architecture diagram">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbf9f2"/>
+      <stop offset="100%" stop-color="#f4f0e6"/>
+    </linearGradient>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f3d2e"/>
+    </marker>
+    <pattern id="d2" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#1f3d2e" fill-opacity=".08"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="520" fill="url(#bg)"/>
+  <rect width="1200" height="520" fill="url(#d2)"/>
+
+  <text x="60" y="50" font-family="'Fraunces', Georgia, serif" font-size="28" font-weight="900" fill="#1f3d2e">Architecture</text>
+  <text x="60" y="76" font-family="'Hanken Grotesk', system-ui, sans-serif" font-size="14" fill="#6f6a5d">Three layers · zero build tools · ES modules in the browser</text>
+
+  <g font-family="'Hanken Grotesk', system-ui, sans-serif">
+
+    <g transform="translate(60, 120)">
+      <rect width="320" height="340" rx="14" fill="#fbf9f2" stroke="#d9d2c0"/>
+      <rect width="320" height="48" rx="14" fill="#1f3d2e"/>
+      <rect width="320" height="14" y="34" fill="#1f3d2e"/>
+      <text x="20" y="31" font-family="'Fraunces', Georgia, serif" font-size="20" font-weight="900" fill="#f4f0e6">Browser · UI</text>
+      <text x="20" y="78" font-size="13" font-weight="700" fill="#1f3d2e">index.html</text>
+      <text x="20" y="98" font-size="12.5" fill="#6f6a5d">Static markup, lifted from mockup</text>
+      <text x="20" y="124" font-size="13" font-weight="700" fill="#1f3d2e">css/styles.css</text>
+      <text x="20" y="144" font-size="12.5" fill="#6f6a5d">Fraunces × Hanken Grotesk, pine/cream/rust</text>
+      <text x="20" y="170" font-size="13" font-weight="700" fill="#1f3d2e">js/app.js</text>
+      <text x="20" y="190" font-size="12.5" fill="#6f6a5d">Views, render, events</text>
+      <text x="20" y="206" font-size="12.5" fill="#6f6a5d">textContent only · XSS-safe</text>
+      <text x="20" y="232" font-size="13" font-weight="700" fill="#1f3d2e">js/validation.js</text>
+      <text x="20" y="252" font-size="12.5" fill="#6f6a5d">Pflicht, Wortzahl, 2–4 km/h, PK ≥ 1000</text>
+      <text x="20" y="278" font-size="13" font-weight="700" fill="#1f3d2e">js/api.js</text>
+      <text x="20" y="298" font-size="12.5" fill="#6f6a5d">fetch wrappers, Basic Auth, status map</text>
+      <text x="20" y="314" font-size="12.5" fill="#6f6a5d">Session in memory only</text>
+    </g>
+
+    <g transform="translate(440, 200)">
+      <rect width="320" height="160" rx="14" fill="#fbf9f2" stroke="#d9d2c0"/>
+      <rect width="320" height="48" rx="14" fill="#c08a2d"/>
+      <rect width="320" height="14" y="34" fill="#c08a2d"/>
+      <text x="20" y="31" font-family="'Fraunces', Georgia, serif" font-size="20" font-weight="900" fill="#1f3d2e">Transport · HTTP</text>
+      <text x="20" y="78" font-size="13" font-weight="700" fill="#1f3d2e">JSON in &amp; out</text>
+      <text x="20" y="98" font-size="12.5" fill="#6f6a5d">multipart/form-data for image upload</text>
+      <text x="20" y="124" font-size="13" font-weight="700" fill="#1f3d2e">HTTP Basic Auth</text>
+      <text x="20" y="144" font-size="12.5" fill="#6f6a5d">Authorization: Basic base64(user:pass)</text>
+    </g>
+
+    <g transform="translate(820, 120)">
+      <rect width="320" height="340" rx="14" fill="#fbf9f2" stroke="#d9d2c0"/>
+      <rect width="320" height="48" rx="14" fill="#8b2e2e"/>
+      <rect width="320" height="14" y="34" fill="#8b2e2e"/>
+      <text x="20" y="31" font-family="'Fraunces', Georgia, serif" font-size="20" font-weight="900" fill="#f4f0e6">REST API · it-university.ch</text>
+      <text x="20" y="78" font-size="13" font-weight="700" fill="#1f3d2e">/resources/hike/all</text>
+      <text x="20" y="98" font-size="12.5" fill="#6f6a5d">GET — list of hikes</text>
+      <text x="20" y="124" font-size="13" font-weight="700" fill="#1f3d2e">/resources/hike/{nr}</text>
+      <text x="20" y="144" font-size="12.5" fill="#6f6a5d">GET · 404 if missing</text>
+      <text x="20" y="170" font-size="13" font-weight="700" fill="#1f3d2e">/resources/hike</text>
+      <text x="20" y="190" font-size="12.5" fill="#6f6a5d">POST · PUT · DELETE (Admin)</text>
+      <text x="20" y="216" font-size="13" font-weight="700" fill="#1f3d2e">/resources/hike/{nr}/comment</text>
+      <text x="20" y="236" font-size="12.5" fill="#6f6a5d">GET (Reader+)</text>
+      <text x="20" y="262" font-size="13" font-weight="700" fill="#1f3d2e">/resources/hike/comment</text>
+      <text x="20" y="282" font-size="12.5" fill="#6f6a5d">POST (Reader+) · DELETE (Admin)</text>
+      <text x="20" y="308" font-size="13" font-weight="700" fill="#1f3d2e">/resources/hike/image</text>
+      <text x="20" y="328" font-size="12.5" fill="#6f6a5d">POST multipart (Admin)</text>
+    </g>
+
+    <g stroke="#1f3d2e" stroke-width="2" fill="none">
+      <path d="M 380 280 L 440 280" marker-end="url(#arr)"/>
+      <path d="M 760 280 L 820 280" marker-end="url(#arr)"/>
+      <path d="M 820 295 L 760 295" marker-end="url(#arr)"/>
+      <path d="M 440 265 L 380 265" marker-end="url(#arr)"/>
+    </g>
+    <text x="395" y="252" font-size="11" font-weight="700" fill="#1f3d2e" letter-spacing="1">REQUEST</text>
+    <text x="395" y="318" font-size="11" font-weight="700" fill="#1f3d2e" letter-spacing="1">RESPONSE</text>
+  </g>
+</svg>

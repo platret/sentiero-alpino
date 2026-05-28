@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600" width="1600" height="600" role="img" aria-label="SentieroAlpino — M294 Hike Frontend">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f3d2e"/>
+      <stop offset="55%" stop-color="#2d543f"/>
+      <stop offset="100%" stop-color="#1f3d2e"/>
+    </linearGradient>
+    <linearGradient id="m1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f2419"/>
+      <stop offset="100%" stop-color="#1a3324"/>
+    </linearGradient>
+    <linearGradient id="m2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#163024"/>
+      <stop offset="100%" stop-color="#234633"/>
+    </linearGradient>
+    <linearGradient id="m3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1d3d2c"/>
+      <stop offset="100%" stop-color="#2d543f"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f4c66b" stop-opacity="1"/>
+      <stop offset="60%" stop-color="#c08a2d" stop-opacity=".6"/>
+      <stop offset="100%" stop-color="#c08a2d" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#f4f0e6" fill-opacity=".05"/>
+    </pattern>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 0.96   0 0 0 0 0.94   0 0 0 0 0.90   0 0 0 0.06 0"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="600" fill="url(#sky)"/>
+  <rect width="1600" height="600" fill="url(#dots)"/>
+
+  <circle cx="1280" cy="180" r="180" fill="url(#sun)"/>
+  <circle cx="1280" cy="180" r="48" fill="#f4c66b" opacity=".9"/>
+
+  <g opacity=".95">
+    <path d="M 0 460 L 180 320 L 320 400 L 460 280 L 620 380 L 780 300 L 920 400 L 1080 320 L 1260 420 L 1420 340 L 1600 440 L 1600 600 L 0 600 Z" fill="url(#m3)"/>
+    <path d="M 0 510 L 140 410 L 260 470 L 420 360 L 560 460 L 720 380 L 880 470 L 1040 400 L 1220 490 L 1400 410 L 1600 500 L 1600 600 L 0 600 Z" fill="url(#m2)"/>
+    <path d="M 0 555 L 160 480 L 320 540 L 480 470 L 640 540 L 800 480 L 960 550 L 1120 490 L 1280 555 L 1440 490 L 1600 545 L 1600 600 L 0 600 Z" fill="url(#m1)"/>
+  </g>
+
+  <g stroke="#c08a2d" stroke-width="2" stroke-dasharray="6 8" fill="none" opacity=".55">
+    <path d="M 80 540 Q 320 450 460 470 T 820 420 T 1180 380 T 1500 320"/>
+  </g>
+  <g fill="#c08a2d">
+    <circle cx="80" cy="540" r="6"/>
+    <circle cx="460" cy="470" r="5"/>
+    <circle cx="820" cy="420" r="5"/>
+    <circle cx="1180" cy="380" r="5"/>
+    <circle cx="1500" cy="320" r="6"/>
+  </g>
+
+  <g transform="translate(80, 120)">
+    <g transform="translate(0, 0)">
+      <circle cx="22" cy="22" r="22" fill="none" stroke="#c08a2d" stroke-width="2.5"/>
+      <polygon points="22,8 32,32 12,32" fill="#c08a2d"/>
+    </g>
+    <text x="62" y="32" font-family="'Fraunces', Georgia, serif" font-size="26" font-weight="900" fill="#f4f0e6" letter-spacing="-0.5">SentieroAlpino</text>
+  </g>
+
+  <g transform="translate(80, 200)">
+    <text x="0" y="0" font-family="'Hanken Grotesk', system-ui, sans-serif" font-size="14" font-weight="700" fill="#c08a2d" letter-spacing="4">SCHWEIZERISCHER NATIONALPARK · MODUL M294</text>
+    <text x="0" y="100" font-family="'Fraunces', Georgia, serif" font-size="124" font-weight="900" fill="#f4f0e6" letter-spacing="-3">Wanderungen.</text>
+    <text x="0" y="160" font-family="'Fraunces', Georgia, serif" font-size="38" font-style="italic" font-weight="400" fill="#f4c66b" letter-spacing="-0.5">A vanilla-JS frontend for a live Swiss hiking REST API.</text>
+  </g>
+
+  <g transform="translate(80, 460)" font-family="'Hanken Grotesk', system-ui, sans-serif" font-size="13" font-weight="600">
+    <g transform="translate(0,0)">
+      <rect width="146" height="32" rx="6" fill="#ffffff14" stroke="#ffffff33"/>
+      <text x="14" y="21" fill="#f4f0e6">HTML · CSS · Vanilla JS</text>
+    </g>
+    <g transform="translate(158,0)">
+      <rect width="118" height="32" rx="6" fill="#ffffff14" stroke="#ffffff33"/>
+      <text x="14" y="21" fill="#f4f0e6">No build step</text>
+    </g>
+    <g transform="translate(286,0)">
+      <rect width="120" height="32" rx="6" fill="#ffffff14" stroke="#ffffff33"/>
+      <text x="14" y="21" fill="#f4f0e6">ES Modules</text>
+    </g>
+    <g transform="translate(416,0)">
+      <rect width="158" height="32" rx="6" fill="#8b2e2e" stroke="#a8453f"/>
+      <text x="14" y="21" fill="#ffffff">30 / 30 tests passing</text>
+    </g>
+    <g transform="translate(584,0)">
+      <rect width="132" height="32" rx="6" fill="#c08a2d" stroke="#c08a2d"/>
+      <text x="14" y="21" fill="#1f3d2e">Live REST API</text>
+    </g>
+  </g>
+
+  <rect width="1600" height="600" filter="url(#grain)" opacity=".4"/>
+</svg>
