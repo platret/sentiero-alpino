@@ -49,7 +49,7 @@
     </td>
     <td width="50%" valign="top">
       <a href="docs/screenshots/05-hike-form.png"><img src="docs/screenshots/05-hike-form.png" alt="Create hike form" width="100%"></a>
-      <p align="center"><sub><b>Hike form · validation</b><br>Speed 2–4 km/h, PK ≥ 1000, 5-word description floor.</sub></p>
+      <p align="center"><sub><b>Hike form · validation</b><br>Speed 2–4 km/h, PK 900–999, 5-word description floor.</sub></p>
     </td>
   </tr>
   <tr>
@@ -114,7 +114,7 @@ hike-frontend/
 │  └─ styles.css           ← Fraunces × Hanken Grotesk · pine/cream/rust
 ├─ js/
 │  ├─ api.js               ← BASE_URL, Basic Auth, fetch wrappers, status map
-│  ├─ validation.js        ← Pflicht · Wortzahl · 2–4 km/h · PK ≥ 1000
+│  ├─ validation.js        ← Pflicht · Wortzahl · 2–4 km/h · PK 900–999
 │  └─ app.js               ← views, render, events, role gates
 ├─ test/
 │  └─ test.html            ← one button per endpoint
@@ -154,7 +154,7 @@ hike-frontend/
 ```jsonc
 // Hike
 {
-  "nr": 1001,
+  "nr": 901,
   "name": "Val Mingèr",
   "description": "Eine gemütliche, kurze Wanderung …",
   "difficulty": 3,           // 1–5
@@ -190,7 +190,7 @@ hike-frontend/
 | All fields required | hike form | except `description` |
 | `description` | hike form | optional &mdash; if filled, ≥ 5 words |
 | `difficulty` | hike form | integer 1–5 |
-| `nr` (new hikes) | hike form | integer ≥ 1000, not duplicated |
+| `nr` (new hikes) | hike form | integer in **900–999** (assigned range), not duplicated |
 | **Speed** | hike form | `distance / (h + m/60)` ∈ **[2, 4] km/h** inclusive |
 | Title | comment | ≥ 10 characters |
 | Text | comment | ≥ 20 characters |

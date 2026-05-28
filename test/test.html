@@ -64,9 +64,9 @@ pre{background:#1f3d2e;color:#f4f0e6;padding:10px;border-radius:6px;font-size:12
 <section>
   <h2>Hike CRUD (Admin)</h2>
   <div class="row">
-    <button class="run" data-t="createHike">POST / (neue Wanderung 1001)</button>
-    <button class="run" data-t="updateHike">PUT / (1001)</button>
-    <button class="run" data-t="delHike">DELETE /?nr=1001</button>
+    <button class="run" data-t="createHike">POST / (neue Wanderung 901)</button>
+    <button class="run" data-t="updateHike">PUT / (901)</button>
+    <button class="run" data-t="delHike">DELETE /?nr=901</button>
     <button class="run" data-t="delHikeMissing">DELETE /?nr=9999 (400)</button>
   </div>
   <pre id="logCrud"></pre>
@@ -121,7 +121,7 @@ async function run (kind) {
     if (kind === 'delComment') { const r = await api.deleteComment(parseInt($('#delc').value, 10)); log('#logCmts', r.status + ' OK', r.body, 'ok'); return }
     if (kind === 'createHike') {
       const r = await api.createHike({
-        nr: 1001, name: 'Testroute', description: 'Eine zwei drei vier fünf', difficulty: 3,
+        nr: 901, name: 'Testroute', description: 'Eine zwei drei vier fünf', difficulty: 3,
         distance: 6, time: [2, 30], imageElevation: 'route_19.jpg',
         created: new Date().toISOString().slice(0, 19), start: 'A', end: 'B',
         createdBy: { username: api.getSession().user, userRole: api.getSession().role }
@@ -130,14 +130,14 @@ async function run (kind) {
     }
     if (kind === 'updateHike') {
       const r = await api.updateHike({
-        nr: 1001, name: 'Testroute (geändert)', description: 'Eine zwei drei vier fünf', difficulty: 3,
+        nr: 901, name: 'Testroute (geändert)', description: 'Eine zwei drei vier fünf', difficulty: 3,
         distance: 6, time: [2, 30], imageElevation: 'route_19.jpg',
         created: new Date().toISOString().slice(0, 19), start: 'A', end: 'B',
         createdBy: { username: api.getSession().user, userRole: api.getSession().role }
       })
       log('#logCrud', '200 OK', r, 'ok'); return
     }
-    if (kind === 'delHike') { const r = await api.deleteHike(1001); log('#logCrud', r.status + ' OK', r.body, 'ok'); return }
+    if (kind === 'delHike') { const r = await api.deleteHike(901); log('#logCrud', r.status + ' OK', r.body, 'ok'); return }
     if (kind === 'delHikeMissing') { const r = await api.deleteHike(9999); log('#logCrud', r.status + ' OK', r.body, 'ok'); return }
     if (kind === 'upload') {
       const file = $('#img').files[0]

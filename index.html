@@ -65,7 +65,7 @@
     <p class="lead">Pflichtfelder ausser Beschreibung. Geschwindigkeit muss 2&ndash;4 km/h ergeben.</p>
     <form id="hikeForm" onsubmit="return false">
       <div class="row2">
-        <div class="field"><label>Nr (PK, &ge; 1000)</label><input id="f_nr" type="number" min="1000"><div class="err">Nummer &ge; 1000 erforderlich.</div></div>
+        <div class="field"><label>Nr (PK, 900&ndash;999)</label><input id="f_nr" type="number" min="900" max="999"><div class="err">Nummer im Bereich 900&ndash;999 erforderlich.</div></div>
         <div class="field"><label>Schwierigkeit (1&ndash;5)</label>
           <select id="f_diff"><option value="">w&auml;hlen&hellip;</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
           <div class="err">Wert 1&ndash;5 erforderlich.</div></div>

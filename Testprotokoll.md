@@ -51,7 +51,7 @@
 
 | # | Beschreibung | Daten | Erwartet | Actual | Pass/Fail |
 |---|---|---|---|---|---|
-| 14 | [positiv] Gültige Wanderung | nr 1001, dist 6, time 2:30 (= 2.4 km/h) | 200/201 | HTTP 200, Body enthält erstellte Hike, Toast "Wanderung erstellt · POST 200 · Testroute", Liste aktualisiert | Pass |
+| 14 | [positiv] Gültige Wanderung | nr 901, dist 6, time 2:30 (= 2.4 km/h) | 200/201 | HTTP 200, Body enthält erstellte Hike, Toast "Wanderung erstellt · POST 200 · Testroute", Liste aktualisiert | Pass |
 | 15 | [negativ] Pflichtfeld fehlt (Name) | name "", Rest gültig | Abgelehnt, "Pflichtfeld" | **Server akzeptiert leeren Namen (HTTP 200) – das Frontend blockt vorher:** clientseitige Validierung gibt "Name ist erforderlich.", kein Request abgesetzt | Pass (durch Frontend) |
 | 16 | [negativ] Geschwindigkeit zu hoch | dist 10, time 1:00 (= 10 km/h) | Abgelehnt, "2–4 km/h" | Kein Request; Inline-Fehler an Dauer-Feld "Geschwindigkeit muss 2–4 km/h sein (aktuell 10.00)." | Pass |
 | 17 | [Randbedingung] Geschwindigkeit genau 2 | dist 4, time 2:00 | Akzeptiert | speed = 2.00, Validierung `>=2 && <=4` lässt durch, HTTP 200 | Pass |
@@ -61,7 +61,7 @@
 
 | # | Beschreibung | Daten | Erwartet | Actual | Pass/Fail |
 |---|---|---|---|---|---|
-| 19 | [positiv] Bestehende Wanderung ändern | nr 1001, neuer Name | 200 | HTTP 200, Body mit geändertem Namen, Toast "Wanderung aktualisiert · PUT 200" | Pass |
+| 19 | [positiv] Bestehende Wanderung ändern | nr 901, neuer Name | 200 | HTTP 200, Body mit geändertem Namen, Toast "Wanderung aktualisiert · PUT 200" | Pass |
 | 20 | [negativ] Ungültige Geschwindigkeit | dist 20, time 1:00 | Abgelehnt | Clientseitige Validierung blockt, kein Request | Pass |
 | 21 | [Randbedingung] Nicht existierende Nr | nr 9999 | 404 / BAD_REQUEST | HTTP **400** mit Body "Nr of the hike has to be greater then 0." – Frontend zeigt "Ungültige Daten (400)" als Toast. (Spec nennt "404 / BAD_REQUEST" – API liefert BAD_REQUEST.) | Pass |
 
@@ -69,7 +69,7 @@
 
 | # | Beschreibung | Daten | Erwartet | Actual | Pass/Fail |
 |---|---|---|---|---|---|
-| 22 | [positiv] Admin löscht | Max, nr 1001 | 200, Bestätigung | HTTP 200, Body `hike 1001 deleted`, Toast "Wanderung gelöscht · DELETE 200" | Pass |
+| 22 | [positiv] Admin löscht | Max, nr 901 | 200, Bestätigung | HTTP 200, Body `hike 901 deleted`, Toast "Wanderung gelöscht · DELETE 200" | Pass |
 | 23 | [negativ] Nicht existierende Nr | nr 9999 | BAD_REQUEST | HTTP 400, Body "Hike not found", Toast "Löschen fehlgeschlagen – Ungültige Daten (400)" | Pass |
 | 24 | [Randbedingung] Reader ohne Rechte | Berta, nr 1 | Abgelehnt, 401/403 | Frontend-Gate: Reader sieht "Löschen"-Button gar nicht erst. Manueller Direktaufruf via Konsole liefert HTTP 401, Toast "Keine Berechtigung (401)". | Pass |
 

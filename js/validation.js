@@ -12,7 +12,7 @@ export function wordCount (s) {
 
 export function validateHike (data) {
   const errors = {}
-  if (!Number.isInteger(data.nr) || data.nr < 1000) errors.nr = 'Nr muss ganzzahlig und &ge; 1000 sein.'
+  if (!Number.isInteger(data.nr) || data.nr < 900 || data.nr > 999) errors.nr = 'Nr muss ganzzahlig und im Bereich 900–999 liegen.'
   if (!data.name || !data.name.trim()) errors.name = 'Name ist erforderlich.'
   else if (data.name.length > 100) errors.name = 'Name max. 100 Zeichen.'
   if (data.description && wordCount(data.description) < 5) errors.description = 'Falls erfasst, mindestens 5 Wörter.'
