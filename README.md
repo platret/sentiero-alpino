@@ -7,6 +7,7 @@
   <a href="#-quickstart"><img alt="HTML5" src="https://img.shields.io/badge/HTML5-1f3d2e?style=for-the-badge&logo=html5&logoColor=c08a2d"></a>
   <a href="#-quickstart"><img alt="CSS3" src="https://img.shields.io/badge/CSS3-1f3d2e?style=for-the-badge&logo=css3&logoColor=c08a2d"></a>
   <a href="#-quickstart"><img alt="Vanilla JS" src="https://img.shields.io/badge/Vanilla%20JS-1f3d2e?style=for-the-badge&logo=javascript&logoColor=c08a2d"></a>
+  <a href="#-quickstart"><img alt="Bootstrap 5.3" src="https://img.shields.io/badge/Bootstrap%205.3-1f3d2e?style=for-the-badge&logo=bootstrap&logoColor=c08a2d"></a>
   <a href="#-quickstart"><img alt="No build" src="https://img.shields.io/badge/No%20build%20step-2d543f?style=for-the-badge"></a>
   <a href="Testprotokoll.md"><img alt="Tests" src="https://img.shields.io/badge/Tests-30%20%2F%2030%20passing-8b2e2e?style=for-the-badge"></a>
   <a href="#"><img alt="Live API" src="https://img.shields.io/badge/Live%20API-it--university.ch-c08a2d?style=for-the-badge"></a>
@@ -86,7 +87,7 @@
 <tr>
   <td width="33%" valign="top">
     <h3>🎨 Design-fidelity</h3>
-    Markup &amp; CSS lifted verbatim from the approved mockup. <b>Fraunces × Hanken Grotesk</b>, pine / cream / rust / gold tokens. No frameworks. No utilities. Just hand-written CSS.
+    Markup &amp; CSS lifted from the approved mockup. <b>Bootstrap 5.3</b> via CDN powers the grid, modals, forms, and validation states; <b>Fraunces × Hanken Grotesk</b> over pine / cream / rust / gold tokens carry the look. CSS variables override every Bootstrap token.
   </td>
   <td width="33%" valign="top">
     <h3>🌐 Live REST integration</h3>
