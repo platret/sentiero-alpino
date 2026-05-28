@@ -4,14 +4,18 @@ import {
   deleteHike, addComment, deleteComment, uploadImage
 } from './api.js'
 import { validateHike, validateComment, validateLogin, speed } from './validation.js'
+import { t, getLang, setLang, listLangs, applyDomTranslations } from './i18n.js'
+import { getTheme, toggleTheme, applyTheme } from './theme.js'
+import { getFilters, setFilters, resetFilters, applyFilters, isActive } from './filters.js'
+import { EMOJIS, getReactions, hasReacted, toggleReaction, userToken, dropComment } from './reactions.js'
 
 const $ = sel => document.querySelector(sel)
-const state = { hikes: [], comments: [], openHike: null, editingNr: null, pendingImage: null }
+const state = { hikes: [], comments: [], openHike: null, editingNr: null, commentSort: 'new', loading: true }
 
-function fmtTime (t) {
-  if (!t) return '–'
-  const h = t[0] || 0; const m = t[1] || 0
-  return h + ' Std ' + String(m).padStart(2, '0') + ' Min'
+function fmtTime (time) {
+  if (!time) return '–'
+  const h = time[0] || 0; const m = time[1] || 0
+  return h + ' h ' + String(m).padStart(2, '0') + ' min'
 }
 
 function stars (n) {
@@ -24,8 +28,9 @@ function el (tag, props, ...children) {
     for (const k in props) {
       if (k === 'class') node.className = props[k]
       else if (k === 'text') node.textContent = props[k]
-      else if (k.startsWith('on')) node.addEventListener(k.slice(2), props[k])
       else if (k === 'html') node.innerHTML = props[k]
+      else if (k.startsWith('on')) node.addEventListener(k.slice(2), props[k])
+      else if (k === 'dataset') { for (const d in props[k]) node.dataset[d] = props[k][d] }
       else node.setAttribute(k, props[k])
     }
   }
@@ -37,23 +42,32 @@ function el (tag, props, ...children) {
   return node
 }
 
-function toast (title, kind, sub) {
+function peaks (level) {
+  const wrap = el('span', { class: 'peaks', 'aria-label': t('chip.difficulty') + ' ' + level + '/5' })
+  for (let i = 1; i <= 5; i++) {
+    const pk = el('span', { class: 'pk l' + i + (i <= level ? ' on' : '') })
+    wrap.appendChild(pk)
+  }
+  return wrap
+}
+
+function toast (titleKey, kind, sub, titleVars) {
   const root = $('#toast')
-  const t = el('div', { class: 't ' + (kind || 'info') })
-  t.appendChild(document.createTextNode(title))
+  const tt = el('div', { class: 't ' + (kind || 'info') })
+  tt.appendChild(document.createTextNode(typeof titleKey === 'string' && titleKey.indexOf('.') !== -1 ? t(titleKey, titleVars) : titleKey))
   if (sub) {
     const s = document.createElement('small')
     s.textContent = sub
-    t.appendChild(s)
+    tt.appendChild(s)
   }
-  root.appendChild(t)
-  setTimeout(() => t.remove(), 4200)
+  root.appendChild(tt)
+  setTimeout(() => tt.remove(), 4200)
 }
 
-function showError (err, fallbackTitle) {
+function showError (err, fallbackKey) {
   const status = err && err.status
   const msg = (err && err.message) || 'Unbekannter Fehler'
-  toast(fallbackTitle || 'Fehler', 'err', status ? msg + ' (' + status + ')' : msg)
+  toast(t(fallbackKey || 'toast.notFound'), 'err', status ? msg + ' (' + status + ')' : msg)
 }
 
 function openModal (id) { $('#' + id).classList.add('show') }
@@ -63,108 +77,247 @@ function renderSession () {
   const s = getSession()
   const root = $('#session')
   root.innerHTML = ''
+
   if (s.role === 'GUEST') {
-    const b = el('span', { class: 'badge b-guest', text: 'Gast' })
-    const btn = el('button', { class: 'btn btn-ghost btn-sm', text: 'Anmelden', onclick: () => openModal('loginModal') })
-    root.appendChild(b); root.appendChild(btn)
+    root.appendChild(el('span', { class: 'badge b-guest', text: t('nav.guest') }))
+    root.appendChild(el('button', { class: 'btn btn-ghost btn-sm', text: t('nav.login'), onclick: () => openModal('loginModal') }))
   } else {
     const cls = s.role === 'ADMIN' ? 'b-admin' : 'b-reader'
-    const b = el('span', { class: 'badge ' + cls, text: s.user + ' · ' + s.role })
-    const btn = el('button', { class: 'btn btn-ghost btn-sm', text: 'Abmelden', onclick: doLogout })
-    root.appendChild(b); root.appendChild(btn)
+    root.appendChild(el('span', { class: 'badge ' + cls, text: s.user + ' · ' + s.role }))
+    root.appendChild(el('button', { class: 'btn btn-ghost btn-sm', text: t('nav.logout'), onclick: doLogout }))
   }
+
+  const langPick = el('div', { class: 'langpick', 'aria-label': t('lang.toggle') })
+  for (const lg of listLangs()) {
+    const b = el('button', { text: lg.toUpperCase(), onclick: () => setLang(lg) })
+    if (getLang() === lg) b.setAttribute('aria-pressed', 'true')
+    langPick.appendChild(b)
+  }
+  root.appendChild(langPick)
+
+  const themeBtn = el('button', {
+    class: 'btn-icon', 'aria-label': t('theme.toggle'), title: t('theme.toggle'),
+    text: getTheme() === 'dark' ? '☀' : '☾',
+    onclick: () => { toggleTheme(); renderSession() }
+  })
+  root.appendChild(themeBtn)
+
   $('#newBtn').style.display = isAdmin() ? 'inline-flex' : 'none'
+}
+
+function renderFilterBar () {
+  const root = $('#filterBar')
+  root.innerHTML = ''
+  const f = getFilters()
+
+  const row1 = el('div', { class: 'filter-row' })
+  const search = el('div', { class: 'search fr-grow' })
+  const input = el('input', { type: 'search', placeholder: t('filter.search'), value: f.q })
+  let debounce
+  input.addEventListener('input', e => {
+    clearTimeout(debounce)
+    debounce = setTimeout(() => { setFilters({ q: e.target.value }); renderList() }, 140)
+  })
+  search.appendChild(input)
+  row1.appendChild(search)
+
+  const sortSel = el('select', { class: 'fselect' })
+  const sortOpts = [['nr', 'filter.sort.nr'], ['name', 'filter.sort.name'], ['distance', 'filter.sort.distance'], ['duration', 'filter.sort.duration'], ['difficulty', 'filter.sort.difficulty']]
+  for (const [v, k] of sortOpts) {
+    const op = el('option', { value: v, text: t(k) })
+    if (f.sort === v) op.selected = true
+    sortSel.appendChild(op)
+  }
+  sortSel.addEventListener('change', e => { setFilters({ sort: e.target.value }); renderList() })
+  const sortWrap = el('label', { class: 'toggle', style: 'gap:8px' })
+  sortWrap.appendChild(el('span', { class: 'filter-label', text: t('filter.sort') }))
+  sortWrap.appendChild(sortSel)
+  row1.appendChild(sortWrap)
+
+  root.appendChild(row1)
+
+  const row2 = el('div', { class: 'filter-row' })
+
+  row2.appendChild(el('span', { class: 'filter-label', text: t('filter.diffLabel') }))
+  const diffChips = el('div', { class: 'chips' })
+  for (let i = 1; i <= 5; i++) {
+    const on = f.diff.indexOf(i) !== -1
+    const btn = el('button', {
+      class: 'chip-btn',
+      onclick: () => {
+        const cur = getFilters().diff.slice()
+        const idx = cur.indexOf(i)
+        if (idx === -1) cur.push(i); else cur.splice(idx, 1)
+        setFilters({ diff: cur.sort() })
+        renderList()
+      }
+    })
+    btn.appendChild(peaks(i))
+    btn.appendChild(document.createTextNode(' ' + i))
+    if (on) btn.setAttribute('aria-pressed', 'true')
+    diffChips.appendChild(btn)
+  }
+  row2.appendChild(diffChips)
+
+  row2.appendChild(el('span', { class: 'filter-label', text: t('filter.duration'), style: 'margin-left:8px' }))
+  const durSel = el('select', { class: 'fselect' })
+  for (const [v, k] of [['all', 'filter.dur.all'], ['short', 'filter.dur.short'], ['mid', 'filter.dur.mid'], ['long', 'filter.dur.long'], ['xlong', 'filter.dur.xlong']]) {
+    const op = el('option', { value: v, text: t(k) })
+    if (f.duration === v) op.selected = true
+    durSel.appendChild(op)
+  }
+  durSel.addEventListener('change', e => { setFilters({ duration: e.target.value }); renderList() })
+  row2.appendChild(durSel)
+
+  if (getSession().user) {
+    const lbl = el('label', { class: 'toggle' })
+    const cb = el('input', { type: 'checkbox' })
+    if (f.mine) cb.checked = true
+    cb.addEventListener('change', () => { setFilters({ mine: cb.checked }); renderList() })
+    lbl.appendChild(cb)
+    lbl.appendChild(el('span', { class: 'sw' }))
+    lbl.appendChild(document.createTextNode(' ' + t('filter.mine')))
+    row2.appendChild(lbl)
+  }
+
+  const hits = el('span', { class: 'hits', id: 'hits' })
+  row2.appendChild(hits)
+
+  if (isActive()) {
+    const reset = el('button', { class: 'reset-btn', text: t('filter.reset'), onclick: () => { resetFilters(); renderFilterBar(); renderList() } })
+    row2.appendChild(reset)
+  }
+
+  root.appendChild(row2)
+}
+
+function renderSkeleton () {
+  const grid = $('#hikeGrid')
+  grid.className = 'skel-grid'
+  grid.innerHTML = ''
+  for (let i = 0; i < 6; i++) {
+    const sk = el('div', { class: 'skel' })
+    sk.appendChild(el('div', { class: 'sk-img' }))
+    const body = el('div', { class: 'sk-body' })
+    body.appendChild(el('div', { class: 'sk-line h22 w70' }))
+    body.appendChild(el('div', { class: 'sk-line w50' }))
+    body.appendChild(el('div', { class: 'sk-line w30' }))
+    sk.appendChild(body)
+    grid.appendChild(sk)
+  }
+  $('#count').textContent = ''
 }
 
 function renderList () {
   const grid = $('#hikeGrid')
-  $('#count').textContent = state.hikes.length + ' Wanderungen'
+  grid.className = 'grid'
+  const filtered = applyFilters(state.hikes, getSession().user)
+  $('#count').textContent = filtered.length + ' ' + t('count.suffix')
+  const hits = $('#hits')
+  if (hits) hits.textContent = t('filter.hits', { shown: filtered.length, total: state.hikes.length })
+
   grid.innerHTML = ''
   if (!state.hikes.length) {
-    grid.appendChild(el('div', { class: 'empty', text: 'Keine Wanderungen vorhanden.' }))
+    grid.appendChild(el('div', { class: 'empty', text: t('list.empty.noHikes') }))
     return
   }
-  for (const h of state.hikes) {
-    const card = el('article', { class: 'card' })
-    if (h.imageElevation) {
-      const thumb = el('div', { class: 'thumb' })
-      const img = el('img', { alt: 'Höhenprofil ' + h.name, loading: 'lazy', src: IMG_BASE + encodeURIComponent(h.imageElevation) })
-      img.onerror = () => { thumb.classList.add('thumb-missing'); img.remove() }
-      thumb.appendChild(img)
-      card.appendChild(thumb)
-    }
-    const top = el('div', { class: 'top' })
-    top.appendChild(el('h3', { text: h.name }))
-    const route = el('div', { class: 'route' })
-    route.appendChild(el('b', { text: h.start }))
-    route.appendChild(document.createTextNode(' → '))
-    route.appendChild(el('b', { text: h.end }))
-    top.appendChild(route)
-    card.appendChild(top)
-
-    const meta = el('div', { class: 'meta' })
-    const diffChip = el('span', { class: 'chip diff' })
-    diffChip.appendChild(el('span', { class: 'lab', text: 'Schwierigkeit' }))
-    diffChip.appendChild(document.createTextNode(' '))
-    for (let i = 1; i <= 5; i++) diffChip.appendChild(el('span', { class: 'pip' + (i <= h.difficulty ? ' on' : '') }))
-    meta.appendChild(diffChip)
-    const distChip = el('span', { class: 'chip' })
-    distChip.appendChild(el('span', { class: 'lab', text: 'Distanz' }))
-    distChip.appendChild(document.createTextNode(' ' + h.distance + ' km'))
-    meta.appendChild(distChip)
-    const durChip = el('span', { class: 'chip' })
-    durChip.appendChild(el('span', { class: 'lab', text: 'Dauer' }))
-    durChip.appendChild(document.createTextNode(' ' + fmtTime(h.time)))
-    meta.appendChild(durChip)
-    card.appendChild(meta)
-
-    const by = el('div', { class: 'by', text: 'Nr ' + h.nr + ' · erstellt von ' + ((h.createdBy && h.createdBy.username) || '–') })
-    card.appendChild(by)
-
-    const foot = el('div', { class: 'foot' })
-    foot.appendChild(el('button', { class: 'btn btn-pri btn-sm', text: 'Details', onclick: () => openDetail(h.nr) }))
-    if (isAdmin()) {
-      foot.appendChild(el('button', { class: 'btn btn-ln btn-sm', text: 'Bearbeiten', onclick: () => openHikeForm(h.nr) }))
-      foot.appendChild(el('button', { class: 'btn btn-del btn-sm', text: 'Löschen', onclick: () => onDeleteHike(h.nr) }))
-    }
-    card.appendChild(foot)
-    grid.appendChild(card)
+  if (!filtered.length) {
+    const empty = el('div', { class: 'empty' })
+    empty.appendChild(document.createTextNode(t('list.empty.noResults')))
+    empty.appendChild(el('br'))
+    empty.appendChild(el('button', { class: 'btn btn-ln btn-sm', text: t('filter.reset'), onclick: () => { resetFilters(); renderFilterBar(); renderList() } }))
+    grid.appendChild(empty)
+    return
   }
+  for (const h of filtered) {
+    grid.appendChild(renderCard(h))
+  }
+}
+
+function renderCard (h) {
+  const card = el('article', { class: 'card' })
+  const thumb = el('div', { class: 'thumb', dataset: { empty: t('card.noImage') } })
+  if (h.imageElevation) {
+    const img = el('img', { alt: t('detail.elev') + ' ' + h.name, loading: 'lazy', src: IMG_BASE + encodeURIComponent(h.imageElevation) })
+    img.onerror = () => { thumb.classList.add('thumb-missing'); img.remove() }
+    thumb.appendChild(img)
+  } else {
+    thumb.classList.add('thumb-missing')
+  }
+  card.appendChild(thumb)
+
+  const top = el('div', { class: 'top' })
+  top.appendChild(el('h3', { text: h.name }))
+  const route = el('div', { class: 'route' })
+  route.appendChild(el('b', { text: h.start }))
+  route.appendChild(document.createTextNode(' → '))
+  route.appendChild(el('b', { text: h.end }))
+  top.appendChild(route)
+  card.appendChild(top)
+
+  const meta = el('div', { class: 'meta' })
+  const diffChip = el('span', { class: 'chip' })
+  diffChip.appendChild(el('span', { class: 'lab', text: t('chip.difficulty') }))
+  diffChip.appendChild(document.createTextNode(' '))
+  diffChip.appendChild(peaks(h.difficulty))
+  meta.appendChild(diffChip)
+  const distChip = el('span', { class: 'chip' })
+  distChip.appendChild(el('span', { class: 'lab', text: t('chip.distance') }))
+  distChip.appendChild(document.createTextNode(' ' + h.distance + ' km'))
+  meta.appendChild(distChip)
+  const durChip = el('span', { class: 'chip' })
+  durChip.appendChild(el('span', { class: 'lab', text: t('chip.duration') }))
+  durChip.appendChild(document.createTextNode(' ' + fmtTime(h.time)))
+  meta.appendChild(durChip)
+  card.appendChild(meta)
+
+  card.appendChild(el('div', { class: 'by', text: t('card.createdBy', { nr: h.nr, user: (h.createdBy && h.createdBy.username) || '–' }) }))
+
+  const foot = el('div', { class: 'foot' })
+  foot.appendChild(el('button', { class: 'btn btn-pri btn-sm', text: t('card.details'), onclick: () => openDetail(h.nr) }))
+  if (isAdmin()) {
+    foot.appendChild(el('button', { class: 'btn btn-ln btn-sm', text: t('card.edit'), onclick: () => openHikeForm(h.nr) }))
+    foot.appendChild(el('button', { class: 'btn btn-del btn-sm', text: t('card.delete'), onclick: () => onDeleteHike(h.nr) }))
+  }
+  card.appendChild(foot)
+  return card
 }
 
 async function openDetail (nr) {
   state.openHike = nr
   let h
-  try { h = await getHike(nr) } catch (e) { showError(e, 'Wanderung nicht geladen'); return }
+  try { h = await getHike(nr) } catch (e) { showError(e, 'toast.notFound'); return }
   const d = $('#detailView')
   d.innerHTML = ''
-  const back = el('button', { class: 'back', text: '← Zurück zur Liste', onclick: closeDetail })
-  d.appendChild(back)
+  d.appendChild(el('button', { class: 'back', text: t('detail.back'), onclick: closeDetail }))
+
   const dgrid = el('div', { class: 'dgrid' })
   const elev = el('div', { class: 'elev' })
-  const img = el('img', { alt: 'Höhenprofil' })
+  const img = el('img', { alt: t('detail.elev') })
   img.src = h.imageElevation ? IMG_BASE + encodeURIComponent(h.imageElevation) : ''
-  img.onerror = () => { img.alt = 'Höhenprofil nicht verfügbar'; img.style.display = 'none' }
+  img.onerror = () => { img.alt = t('card.noImage'); img.style.display = 'none' }
   elev.appendChild(img)
-  elev.appendChild(el('div', { class: 'cap', text: 'Höhenprofil · ' + (h.imageElevation || '–') }))
+  elev.appendChild(el('div', { class: 'cap', text: t('detail.elev') + ' · ' + (h.imageElevation || '–') }))
   dgrid.appendChild(elev)
 
   const dinfo = el('div', { class: 'dinfo' })
   dinfo.appendChild(el('h2', { text: h.name }))
   dinfo.appendChild(el('div', { class: 'sub', text: h.start + ' → ' + h.end }))
   const facts = el('div', { class: 'facts' })
-  facts.appendChild(factBox('Schwierigkeit', h.difficulty + ' / 5'))
-  facts.appendChild(factBox('Distanz', h.distance + ' km'))
-  facts.appendChild(factBox('Dauer', fmtTime(h.time)))
-  facts.appendChild(factBox('Ø Tempo', speed(h.distance, h.time[0], h.time[1]).toFixed(2) + ' km/h'))
+  facts.appendChild(factBox(t('chip.difficulty'), h.difficulty + ' / 5'))
+  facts.appendChild(factBox(t('chip.distance'), h.distance + ' km'))
+  facts.appendChild(factBox(t('chip.duration'), fmtTime(h.time)))
+  facts.appendChild(factBox(t('detail.speed'), speed(h.distance, h.time[0], h.time[1]).toFixed(2) + ' km/h'))
   dinfo.appendChild(facts)
   if (h.description) dinfo.appendChild(el('div', { class: 'desc', text: h.description }))
-  else dinfo.appendChild(el('div', { class: 'hint', text: 'Keine Beschreibung erfasst.' }))
+  else dinfo.appendChild(el('div', { class: 'hint', text: t('detail.noDesc') }))
   dgrid.appendChild(dinfo)
   d.appendChild(dgrid)
 
   const comments = el('div', { class: 'comments' })
-  comments.appendChild(el('h3', { text: 'Kommentare' }))
+  const head = el('div', { class: 'comments-head' })
+  head.appendChild(el('h3', { text: t('comments.title') }))
+  comments.appendChild(head)
   d.appendChild(comments)
 
   $('#listView').style.display = 'none'
@@ -172,14 +325,15 @@ async function openDetail (nr) {
   window.scrollTo(0, 0)
 
   if (!isReader()) {
-    comments.appendChild(el('div', { class: 'empty', text: 'Bitte anmelden (Reader oder Admin), um Kommentare zu sehen und zu erfassen.' }))
+    comments.appendChild(el('div', { class: 'empty', text: t('comments.guestHint') }))
     return
   }
   try {
     const list = await getComments(nr)
-    renderCommentsInto(comments, nr, list)
+    state.comments = list
+    renderCommentsInto(comments, head, nr, list)
   } catch (e) {
-    showError(e, 'Kommentare nicht geladen')
+    showError(e, 'toast.notFound')
   }
 }
 
@@ -190,34 +344,98 @@ function factBox (l, v) {
   return f
 }
 
-function renderCommentsInto (root, hikeNr, list) {
-  if (!list.length) root.appendChild(el('div', { class: 'empty', text: 'Noch keine Kommentare zu dieser Wanderung.' }))
-  else {
-    for (const c of list) {
-      const cmt = el('div', { class: 'cmt' })
-      const ch = el('div', { class: 'ch' })
-      ch.appendChild(el('h4', { text: c.title }))
-      ch.appendChild(el('span', { class: 'stars', text: stars(c.rating) }))
-      cmt.appendChild(ch)
-      cmt.appendChild(el('p', { text: c.text }))
-      const ch2 = el('div', { class: 'ch' })
-      const who = c.createdBy ? (c.createdBy.username + ' · ' + c.createdBy.userRole) : '–'
-      ch2.appendChild(el('span', { class: 'cby', text: who }))
-      if (isAdmin()) ch2.appendChild(el('button', { class: 'btn btn-del btn-sm', text: 'Löschen', onclick: () => onDeleteComment(c.nr) }))
-      cmt.appendChild(ch2)
-      root.appendChild(cmt)
-    }
+function sortedComments (list) {
+  const arr = list.slice()
+  const cmp = {
+    new: (a, b) => (b.created || '').localeCompare(a.created || ''),
+    old: (a, b) => (a.created || '').localeCompare(b.created || ''),
+    ratingHigh: (a, b) => b.rating - a.rating,
+    ratingLow: (a, b) => a.rating - b.rating
+  }[state.commentSort]
+  if (cmp) arr.sort(cmp)
+  return arr
+}
+
+function renderCommentsInto (root, head, hikeNr, list) {
+  while (head.children.length > 1) head.removeChild(head.lastChild)
+  const sortSel = el('select', { class: 'fselect' })
+  for (const [v, k] of [['new', 'comments.sort.new'], ['old', 'comments.sort.old'], ['ratingHigh', 'comments.sort.ratingHigh'], ['ratingLow', 'comments.sort.ratingLow']]) {
+    const op = el('option', { value: v, text: t(k) })
+    if (state.commentSort === v) op.selected = true
+    sortSel.appendChild(op)
   }
+  sortSel.addEventListener('change', e => {
+    state.commentSort = e.target.value
+    rerenderComments(root, head, hikeNr, list)
+  })
+  const lbl = el('span', { class: 'filter-label', text: t('comments.sortLabel') })
+  const wrap = el('div', { style: 'display:flex;gap:8px;align-items:center' })
+  wrap.appendChild(lbl); wrap.appendChild(sortSel)
+  head.appendChild(wrap)
+
+  rerenderComments(root, head, hikeNr, list)
+}
+
+function rerenderComments (root, head, hikeNr, list) {
+  while (root.children.length > 1) root.removeChild(root.lastChild)
+  const sorted = sortedComments(list)
+  if (!sorted.length) root.appendChild(el('div', { class: 'empty', text: t('comments.empty') }))
+  else {
+    for (const c of sorted) root.appendChild(renderCommentCard(c))
+  }
+  root.appendChild(renderCommentForm(hikeNr))
+}
+
+function renderCommentCard (c) {
+  const cmt = el('div', { class: 'cmt' })
+  const ch = el('div', { class: 'ch' })
+  ch.appendChild(el('h4', { text: c.title }))
+  ch.appendChild(el('span', { class: 'stars', text: stars(c.rating) }))
+  cmt.appendChild(ch)
+  cmt.appendChild(el('p', { text: c.text }))
+  const ch2 = el('div', { class: 'ch' })
+  const who = c.createdBy ? (c.createdBy.username + ' · ' + c.createdBy.userRole) : '–'
+  ch2.appendChild(el('span', { class: 'cby', text: who }))
+  if (isAdmin()) ch2.appendChild(el('button', { class: 'btn btn-del btn-sm', text: t('card.delete'), onclick: () => onDeleteComment(c.nr) }))
+  cmt.appendChild(ch2)
+
+  const rxRow = el('div', { class: 'reactions', 'aria-label': t('reactions.label') })
+  const tok = userToken(getSession().user)
+  const counts = getReactions(c.nr)
+  for (const e of EMOJIS) {
+    const cnt = counts[e]
+    const btn = el('button', { class: 'rx', type: 'button', onclick: () => onReact(c.nr, e, btn) })
+    if (hasReacted(c.nr, e, tok)) btn.setAttribute('aria-pressed', 'true')
+    btn.appendChild(document.createTextNode(e))
+    if (cnt > 0) btn.appendChild(el('span', { class: 'ct', text: cnt }))
+    rxRow.appendChild(btn)
+  }
+  cmt.appendChild(rxRow)
+  return cmt
+}
+
+function onReact (commentNr, emoji, btn) {
+  const tok = userToken(getSession().user)
+  toggleReaction(commentNr, emoji, tok)
+  const pressed = hasReacted(commentNr, emoji, tok)
+  if (pressed) btn.setAttribute('aria-pressed', 'true')
+  else btn.removeAttribute('aria-pressed')
+  const counts = getReactions(commentNr)
+  btn.innerHTML = ''
+  btn.appendChild(document.createTextNode(emoji))
+  if (counts[emoji] > 0) btn.appendChild(el('span', { class: 'ct', text: counts[emoji] }))
+}
+
+function renderCommentForm (hikeNr) {
   const form = el('div', { class: 'cmt', style: 'border-style:dashed' })
-  form.appendChild(el('h4', { text: 'Kommentar erfassen', style: 'margin-bottom:10px' }))
-  const fT = field('Titel (min. 10 Zeichen)', 'input', 'c_title')
-  const fX = field('Text (min. 20 Zeichen)', 'textarea', 'c_text')
-  const fR = field('Bewertung (1–5)', 'select', 'c_rating', ['', '1', '2', '3', '4', '5'])
+  form.appendChild(el('h4', { text: t('comments.formTitle'), style: 'margin-bottom:10px' }))
+  form.appendChild(field(t('comments.fieldTitle'), 'input', 'c_title'))
+  form.appendChild(field(t('comments.fieldText'), 'textarea', 'c_text'))
+  const fR = field(t('comments.fieldRating'), 'select', 'c_rating', ['', '1', '2', '3', '4', '5'])
   fR.style.maxWidth = '160px'
-  form.appendChild(fT); form.appendChild(fX); form.appendChild(fR)
-  const submit = el('button', { class: 'btn btn-pri btn-sm', text: 'Absenden', onclick: () => onAddComment(hikeNr) })
-  form.appendChild(submit)
-  root.appendChild(form)
+  form.appendChild(fR)
+  form.appendChild(el('button', { class: 'btn btn-pri btn-sm', text: t('comments.submit'), onclick: () => onAddComment(hikeNr) }))
+  return form
 }
 
 function field (label, kind, id, options) {
@@ -235,8 +453,7 @@ function field (label, kind, id, options) {
   } else input = document.createElement('input')
   input.id = id
   f.appendChild(input)
-  const err = el('div', { class: 'err' })
-  f.appendChild(err)
+  f.appendChild(el('div', { class: 'err' }))
   return f
 }
 
@@ -259,8 +476,8 @@ function setFieldError (input, msg) {
   }
 }
 
-function clearFormErrors (formSelector) {
-  document.querySelectorAll(formSelector + ' .field').forEach(f => {
+function clearFormErrors (sel) {
+  document.querySelectorAll(sel + ' .field').forEach(f => {
     f.classList.remove('bad')
     const e = f.querySelector('.err')
     if (e) e.classList.remove('show')
@@ -268,7 +485,7 @@ function clearFormErrors (formSelector) {
 }
 
 async function onAddComment (hikeNr) {
-  if (!isReader()) { toast('Bitte anmelden', 'err', 'Reader oder Admin nötig (401)'); return }
+  if (!isReader()) { toast(t('toast.noPerm'), 'err', '401'); return }
   const title = $('#c_title').value.trim()
   const text = $('#c_text').value.trim()
   const rating = parseInt($('#c_rating').value, 10)
@@ -276,24 +493,21 @@ async function onAddComment (hikeNr) {
   setFieldError($('#c_title'), errors.title)
   setFieldError($('#c_text'), errors.text)
   setFieldError($('#c_rating'), errors.rating)
-  if (Object.keys(errors).length) { toast('Validierung fehlgeschlagen', 'err', 'Bitte markierte Felder prüfen'); return }
+  if (Object.keys(errors).length) { toast(t('toast.validation'), 'err', t('toast.validationSub')); return }
   const hike = state.hikes.find(x => x.nr === hikeNr)
-  if (!hike) { toast('Wanderung nicht gefunden', 'err', '404'); return }
+  if (!hike) { toast(t('toast.notFound'), 'err', '404'); return }
   const payload = {
-    nr: 0,
-    title,
-    text,
-    rating,
+    nr: 0, title, text, rating,
     created: new Date().toISOString().slice(0, 19),
     createdBy: { username: getSession().user, userRole: getSession().role },
     hike: stripHike(hike)
   }
   try {
     await addComment(payload)
-    toast('Kommentar erfasst', 'ok', 'POST 200')
+    toast(t('toast.commentAdded'), 'ok', 'POST 200')
     openDetail(hikeNr)
   } catch (e) {
-    showError(e, 'Kommentar nicht erfasst')
+    showError(e, 'toast.commentAdded')
   }
 }
 
@@ -307,37 +521,37 @@ function stripHike (h) {
 }
 
 async function onDeleteComment (nr) {
-  if (!isAdmin()) { toast('Keine Berechtigung', 'err', '403'); return }
-  if (!confirm('Kommentar wirklich löschen?')) return
+  if (!isAdmin()) { toast(t('toast.noPerm'), 'err', '403'); return }
+  if (!confirm(t('confirm.delComment'))) return
   try {
     await deleteComment(nr)
-    toast('Kommentar gelöscht', 'ok', 'DELETE 200')
+    dropComment(nr)
+    toast(t('toast.commentDeleted'), 'ok', 'DELETE 200')
     if (state.openHike) openDetail(state.openHike)
   } catch (e) {
-    showError(e, 'Kommentar nicht gelöscht')
+    showError(e, 'toast.commentDeleted')
   }
 }
 
 async function onDeleteHike (nr) {
-  if (!isAdmin()) { toast('Keine Berechtigung', 'err', '403'); return }
+  if (!isAdmin()) { toast(t('toast.noPerm'), 'err', '403'); return }
   const h = state.hikes.find(x => x.nr === nr)
   if (!h) return
-  if (!confirm('Wanderung „' + h.name + '" wirklich löschen?')) return
+  if (!confirm(t('confirm.delHike', { name: h.name }))) return
   try {
     await deleteHike(nr)
-    toast('Wanderung gelöscht', 'ok', 'DELETE 200 · ' + h.name)
+    toast(t('toast.deleted'), 'ok', 'DELETE 200 · ' + h.name)
     if (state.openHike === nr) closeDetail()
     await loadAndRender()
   } catch (e) {
-    showError(e, 'Löschen fehlgeschlagen')
+    showError(e, 'toast.deleted')
   }
 }
 
 function openHikeForm (nr) {
-  if (!isAdmin()) { toast('Keine Berechtigung', 'err', 'Nur Admin (403)'); return }
+  if (!isAdmin()) { toast(t('toast.noPerm'), 'err', '403'); return }
   state.editingNr = nr || null
-  state.pendingImage = null
-  $('#hmTitle').textContent = nr ? 'Wanderung bearbeiten' : 'Neue Wanderung'
+  $('#hmTitle').textContent = nr ? t('hikeForm.titleEdit') : t('hikeForm.titleNew')
   clearFormErrors('#hikeForm')
   const f = state.hikes.find(x => x.nr === nr)
   $('#f_nr').value = f ? f.nr : ''
@@ -351,11 +565,29 @@ function openHikeForm (nr) {
   $('#f_start').value = f ? f.start : ''
   $('#f_end').value = f ? f.end : ''
   $('#f_img').value = ''
+  updateSpeedPill()
   openModal('hikeModal')
 }
 
+function updateSpeedPill () {
+  const pill = $('#speedPill')
+  if (!pill) return
+  const dist = parseFloat($('#f_dist').value)
+  const h = parseInt($('#f_h').value, 10)
+  const m = parseInt($('#f_m').value, 10)
+  if (isNaN(dist) || dist <= 0 || isNaN(h) || isNaN(m) || (h === 0 && m === 0)) {
+    pill.style.display = 'none'
+    return
+  }
+  const sp = speed(dist, h, m)
+  const ok = sp >= 2 && sp <= 4
+  pill.style.display = 'inline-block'
+  pill.className = 'speed-pill ' + (ok ? 'ok' : 'bad')
+  pill.textContent = t(ok ? 'speedPill.ok' : 'speedPill.bad', { v: sp.toFixed(2) })
+}
+
 async function saveHike () {
-  if (!isAdmin()) { toast('Keine Berechtigung', 'err', '403'); return }
+  if (!isAdmin()) { toast(t('toast.noPerm'), 'err', '403'); return }
   const editing = state.hikes.find(x => x.nr === state.editingNr)
   const nr = parseInt($('#f_nr').value, 10)
   const name = $('#f_name').value.trim()
@@ -370,16 +602,13 @@ async function saveHike () {
   const imageName = file ? file.name : (editing ? editing.imageElevation : '')
 
   const data = {
-    nr: isNaN(nr) ? null : nr,
-    name,
-    description: desc,
+    nr: isNaN(nr) ? null : nr, name, description: desc,
     difficulty: isNaN(diff) ? null : diff,
     distance: isNaN(dist) ? null : dist,
     time: [isNaN(h) ? null : h, isNaN(m) ? null : m],
     imageElevation: imageName,
     created: editing ? editing.created : new Date().toISOString().slice(0, 19),
-    start,
-    end,
+    start, end,
     createdBy: { username: getSession().user, userRole: getSession().role }
   }
 
@@ -394,37 +623,27 @@ async function saveHike () {
   if (errors.start) setFieldError($('#f_start'), errors.start)
   if (errors.end) setFieldError($('#f_end'), errors.end)
   if (errors.imageElevation) setFieldError($('#f_img'), errors.imageElevation)
-  if (Object.keys(errors).length) { toast('Validierung fehlgeschlagen', 'err', 'Bitte markierte Felder prüfen (400)'); return }
+  if (Object.keys(errors).length) { toast(t('toast.validation'), 'err', t('toast.validationSub')); return }
 
   if (!editing && state.hikes.some(x => x.nr === nr)) {
-    setFieldError($('#f_nr'), 'Nr bereits vergeben.')
-    toast('Nr bereits vergeben', 'err', '400 Bad Request')
+    setFieldError($('#f_nr'), t('toast.dupNr'))
+    toast(t('toast.dupNr'), 'err', '400')
     return
   }
 
   if (file) {
-    try {
-      await uploadImage(file)
-      toast('Bild hochgeladen', 'ok', file.name)
-    } catch (e) {
-      showError(e, 'Bild-Upload fehlgeschlagen')
-      return
-    }
+    try { await uploadImage(file); toast(t('toast.imgUploaded'), 'ok', file.name) }
+    catch (e) { showError(e, 'toast.imgFailed'); return }
   }
 
   try {
-    if (editing) {
-      await updateHike(data)
-      toast('Wanderung aktualisiert', 'ok', 'PUT 200 · ' + name)
-    } else {
-      await createHike(data)
-      toast('Wanderung erstellt', 'ok', 'POST 200 · ' + name)
-    }
+    if (editing) { await updateHike(data); toast(t('toast.updated'), 'ok', 'PUT 200 · ' + name) }
+    else { await createHike(data); toast(t('toast.created'), 'ok', 'POST 200 · ' + name) }
     closeModal('hikeModal')
     await loadAndRender()
     if (state.openHike) openDetail(state.openHike)
   } catch (e) {
-    showError(e, 'Speichern fehlgeschlagen')
+    showError(e, 'toast.created')
   }
 }
 
@@ -444,9 +663,10 @@ async function doLogin () {
     $('#lgPass').value = ''
     closeModal('loginModal')
     renderSession()
+    renderFilterBar()
     await loadAndRender()
     if (state.openHike) openDetail(state.openHike)
-    toast('Angemeldet als ' + u, 'ok', role + ' · 200 OK')
+    toast(t('toast.loggedIn', { user: u }), 'ok', role + ' · 200 OK')
   } catch (e) {
     $('#lgErr').textContent = e.message
     $('#lgErr').classList.add('show')
@@ -456,18 +676,22 @@ async function doLogin () {
 function doLogout () {
   logout()
   renderSession()
-  toast('Abgemeldet', 'info')
+  renderFilterBar()
+  toast(t('toast.loggedOut'), 'info')
   if (state.openHike) openDetail(state.openHike)
   renderList()
 }
 
 async function loadAndRender () {
+  state.loading = true
+  renderSkeleton()
   try {
     state.hikes = await getAllHikes()
   } catch (e) {
     state.hikes = []
-    showError(e, 'Wanderungen nicht geladen')
+    showError(e, 'toast.notFound')
   }
+  state.loading = false
   renderList()
 }
 
@@ -477,11 +701,24 @@ function wireEvents () {
   $('#hmSubmit').addEventListener('click', saveHike)
   $('#hmCancel').addEventListener('click', () => closeModal('hikeModal'))
   $('#newBtn').addEventListener('click', () => openHikeForm())
+  for (const id of ['f_dist', 'f_h', 'f_m']) {
+    document.getElementById(id).addEventListener('input', updateSpeedPill)
+  }
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeModal('loginModal'); closeModal('hikeModal') }
   })
+  document.addEventListener('lang:change', () => {
+    applyDomTranslations()
+    renderSession()
+    renderFilterBar()
+    renderList()
+    if (state.openHike) openDetail(state.openHike)
+  })
 }
 
+applyTheme()
+applyDomTranslations()
 wireEvents()
 renderSession()
+renderFilterBar()
 loadAndRender()
