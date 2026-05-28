@@ -38,28 +38,38 @@
 <table>
   <tr>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/01-list-guest.png"><img src="docs/screenshots/01-list-guest.png" alt="List as Gast" width="100%"></a>
-      <p align="center"><sub><b>List view · Guest</b><br>Every visitor sees the hikes immediately.</sub></p>
+      <a href="docs/screenshots/01-list-guest.png"><img src="docs/screenshots/01-list-guest.png" alt="List as Gast with filter bar" width="100%"></a>
+      <p align="center"><sub><b>List view · search, filter, sort</b><br>Full-text search, difficulty chips, duration bucket, "nur meine", URL-synced filters.</sub></p>
     </td>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/03-list-admin.png"><img src="docs/screenshots/03-list-admin.png" alt="List as Admin" width="100%"></a>
-      <p align="center"><sub><b>List view · Admin</b><br>"Bearbeiten" and "Löschen" surface for admins only.</sub></p>
+      <a href="docs/screenshots/07-dark-mode.png"><img src="docs/screenshots/07-dark-mode.png" alt="Dark mode" width="100%"></a>
+      <p align="center"><sub><b>Dark mode</b><br>One-tap toggle, persisted, honours <code>prefers-color-scheme</code> on first visit.</sub></p>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/04-detail.png"><img src="docs/screenshots/04-detail.png" alt="Detail view with comments" width="100%"></a>
-      <p align="center"><sub><b>Detail · elevation profile · comments</b><br>Real images from <code>/img/{filename}</code> on the live API.</sub></p>
+      <a href="docs/screenshots/08-romansh.png"><img src="docs/screenshots/08-romansh.png" alt="Romansh (Rumantsch Vallader)" width="100%"></a>
+      <p align="center"><sub><b>Trilingual · DE · IT · RM</b><br>Full UI translates instantly. Rumantsch Vallader for the Engadin spirit.</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <a href="docs/screenshots/09-detail-reactions.png"><img src="docs/screenshots/09-detail-reactions.png" alt="Detail with reactions" width="100%"></a>
+      <p align="center"><sub><b>Detail · comment sort · reactions</b><br>Sort by date or rating · 4 emoji reactions per comment.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="docs/screenshots/03-list-admin.png"><img src="docs/screenshots/03-list-admin.png" alt="List as Admin" width="100%"></a>
+      <p align="center"><sub><b>List view · Admin</b><br>"Bearbeiten" and "Löschen" surface only for admins.</sub></p>
     </td>
     <td width="50%" valign="top">
       <a href="docs/screenshots/05-hike-form.png"><img src="docs/screenshots/05-hike-form.png" alt="Create hike form" width="100%"></a>
-      <p align="center"><sub><b>Hike form · validation</b><br>Speed 2–4 km/h, PK 900–999, 5-word description floor.</sub></p>
+      <p align="center"><sub><b>Hike form · live speed pill</b><br>2–4 km/h validation surfaces in real time as you type.</sub></p>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/02-login.png"><img src="docs/screenshots/02-login.png" alt="Login modal" width="100%"></a>
-      <p align="center"><sub><b>Login · HTTP Basic Auth</b><br>Credentials live in memory only — never localStorage, never the DOM.</sub></p>
+      <a href="docs/screenshots/04-detail.png"><img src="docs/screenshots/04-detail.png" alt="Detail view" width="100%"></a>
+      <p align="center"><sub><b>Detail · elevation profile</b><br>Real images from <code>/img/{filename}</code> on the live API.</sub></p>
     </td>
     <td width="50%" valign="top">
       <a href="docs/screenshots/06-test-console.png"><img src="docs/screenshots/06-test-console.png" alt="API test console" width="100%"></a>
@@ -84,21 +94,35 @@
   </td>
   <td width="33%" valign="top">
     <h3>🔐 Role-gated</h3>
-    <b>Guest → Reader → Admin.</b> Gates in the UI <i>and</i> re-checked before every protected request. Status codes mapped to humane German toasts.
+    <b>Guest → Reader → Admin.</b> Gates in the UI <i>and</i> re-checked before every protected request. Status codes mapped to humane toasts.
+  </td>
+</tr>
+<tr>
+  <td width="33%" valign="top">
+    <h3>🔎 Search · filter · sort</h3>
+    Full-text search across name / start / end / description, multi-select difficulty chips, duration buckets, "nur meine" toggle, 5 sort orders, hit counter. Filter state is <b>URL-synced</b> — share or refresh, it survives.
+  </td>
+  <td width="33%" valign="top">
+    <h3>🌗 Dark mode + i18n</h3>
+    One-tap dark mode honours <code>prefers-color-scheme</code> on first visit. UI translates into <b>Deutsch · Italiano · Rumantsch (Vallader)</b> — full re-render in &lt; 5 ms.
+  </td>
+  <td width="33%" valign="top">
+    <h3>💬 Comment polish</h3>
+    Sort by newest / oldest / rating. Four emoji reactions per comment (👍 ❤️ 🥾 🏔️) stored locally per browser. Difficulty pips replaced with stacked-peak icons.
   </td>
 </tr>
 <tr>
   <td width="33%" valign="top">
     <h3>🧪 30 / 30 black-box tests</h3>
-    Every test case from <code>Testfaelle.xlsx</code> executed against the live API. Results, surprises, and API quirks documented in <a href="Testprotokoll.md"><code>Testprotokoll.md</code></a>.
+    Every case from <code>Testfaelle.xlsx</code> executed against the live API. Results, surprises, and API quirks documented in <a href="Testprotokoll.md"><code>Testprotokoll.md</code></a>.
   </td>
   <td width="33%" valign="top">
     <h3>🛡 Hardened</h3>
-    All user content rendered via <code>textContent</code>. Passwords never leave the form. Session lives in memory. Logout clears everything. XSS-safe by construction.
+    User content rendered via <code>textContent</code>. Passwords never leave the form. Session in <code>sessionStorage</code>, theme and UI prefs in <code>localStorage</code>. XSS-safe by construction.
   </td>
   <td width="33%" valign="top">
-    <h3>📐 KISS &amp; DRY</h3>
-    Eight files. Zero dependencies. Zero comments. <b>StandardJS</b>-conformant. Reads top-to-bottom in 15 minutes.
+    <h3>✨ Polish</h3>
+    Skeleton loaders during fetch. Live "2.4 km/h ✓" speed pill in the hike form. Lazy-loaded card thumbnails. Toasts. Hover-zoom. No build step.
   </td>
 </tr>
 </table>
