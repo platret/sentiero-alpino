@@ -48,8 +48,8 @@
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/08-romansh.png"><img src="docs/screenshots/08-romansh.png" alt="Romansh (Rumantsch Vallader)" width="100%"></a>
-      <p align="center"><sub><b>Trilingual · DE · IT · RM</b><br>Full UI translates instantly. Rumantsch Vallader for the Engadin spirit.</sub></p>
+      <a href="docs/screenshots/08-french.png"><img src="docs/screenshots/08-french.png" alt="French translation" width="100%"></a>
+      <p align="center"><sub><b>Trilingual · DE · IT · FR</b><br>Full UI translates instantly into the three main Swiss languages.</sub></p>
     </td>
     <td width="50%" valign="top">
       <a href="docs/screenshots/09-detail-reactions.png"><img src="docs/screenshots/09-detail-reactions.png" alt="Detail with reactions" width="100%"></a>
@@ -104,7 +104,7 @@
   </td>
   <td width="33%" valign="top">
     <h3>🌗 Dark mode + i18n</h3>
-    One-tap dark mode honours <code>prefers-color-scheme</code> on first visit. UI translates into <b>Deutsch · Italiano · Rumantsch (Vallader)</b> — full re-render in &lt; 5 ms.
+    One-tap dark mode honours <code>prefers-color-scheme</code> on first visit. UI translates into <b>Deutsch · Italiano · Français</b> — full re-render in &lt; 5 ms.
   </td>
   <td width="33%" valign="top">
     <h3>💬 Comment polish</h3>
