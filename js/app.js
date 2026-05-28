@@ -289,10 +289,12 @@ async function openDetail (nr) {
 
   const dgrid = el('div', { class: 'dgrid' })
   const elev = el('div', { class: 'elev' })
+  const frame = el('div', { class: 'frame' })
   const img = el('img', { alt: t('detail.elev') })
   img.src = h.imageElevation ? IMG_BASE + encodeURIComponent(h.imageElevation) : ''
   img.onerror = () => { img.alt = t('card.noImage'); img.style.display = 'none' }
-  elev.appendChild(img)
+  frame.appendChild(img)
+  elev.appendChild(frame)
   elev.appendChild(el('div', { class: 'cap', text: t('detail.elev') + ' · ' + (h.imageElevation || '–') }))
   dgrid.appendChild(elev)
 
