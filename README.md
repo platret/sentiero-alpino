@@ -53,8 +53,8 @@
       <p align="center"><sub><b>Trilingual · DE · IT · FR</b><br>Full UI translates instantly into the three main Swiss languages.</sub></p>
     </td>
     <td width="50%" valign="top">
-      <a href="docs/screenshots/09-detail-reactions.png"><img src="docs/screenshots/09-detail-reactions.png" alt="Detail with reactions" width="100%"></a>
-      <p align="center"><sub><b>Detail · comment sort · reactions</b><br>Sort by date or rating · 4 emoji reactions per comment.</sub></p>
+      <a href="docs/screenshots/09-detail-reactions.png"><img src="docs/screenshots/09-detail-reactions.png" alt="Detail with comments" width="100%"></a>
+      <p align="center"><sub><b>Detail · comment sort</b><br>Sort comments by date or rating.</sub></p>
     </td>
   </tr>
   <tr>
@@ -109,7 +109,7 @@
   </td>
   <td width="33%" valign="top">
     <h3>💬 Comment polish</h3>
-    Sort by newest / oldest / rating. Four emoji reactions per comment (👍 ❤️ 🥾 🏔️) stored locally per browser. Difficulty pips replaced with stacked-peak icons.
+    Sort by newest / oldest / rating. Difficulty pips replaced with stacked-peak icons.
   </td>
 </tr>
 <tr>

@@ -7,7 +7,6 @@ import { validateHike, validateComment, validateLogin, speed } from './validatio
 import { t, getLang, setLang, listLangs, applyDomTranslations } from './i18n.js'
 import { getTheme, toggleTheme, applyTheme } from './theme.js'
 import { getFilters, setFilters, resetFilters, applyFilters, isActive } from './filters.js'
-import { EMOJIS, getReactions, hasReacted, toggleReaction, userToken, dropComment } from './reactions.js'
 
 const $ = sel => document.querySelector(sel)
 const state = { hikes: [], comments: [], openHike: null, editingNr: null, commentSort: 'new', loading: true }
@@ -393,31 +392,7 @@ function renderCommentCard (c) {
   ch2.appendChild(el('span', { class: 'cby', text: who }))
   if (isAdmin()) ch2.appendChild(el('button', { class: 'btn btn-del btn-sm', type: 'button', text: t('card.delete'), onclick: () => onDeleteComment(c.nr) }))
   cmt.appendChild(ch2)
-
-  const rxRow = el('div', { class: 'reactions', 'aria-label': t('reactions.label') })
-  const tok = userToken(getSession().user)
-  const counts = getReactions(c.nr)
-  for (const e of EMOJIS) {
-    const btn = el('button', { class: 'rx', type: 'button', onclick: () => onReact(c.nr, e, btn) })
-    if (hasReacted(c.nr, e, tok)) btn.setAttribute('aria-pressed', 'true')
-    btn.appendChild(document.createTextNode(e))
-    if (counts[e] > 0) btn.appendChild(el('span', { class: 'ct', text: counts[e] }))
-    rxRow.appendChild(btn)
-  }
-  cmt.appendChild(rxRow)
   return cmt
-}
-
-function onReact (commentNr, emoji, btn) {
-  const tok = userToken(getSession().user)
-  toggleReaction(commentNr, emoji, tok)
-  const pressed = hasReacted(commentNr, emoji, tok)
-  if (pressed) btn.setAttribute('aria-pressed', 'true')
-  else btn.removeAttribute('aria-pressed')
-  const counts = getReactions(commentNr)
-  btn.innerHTML = ''
-  btn.appendChild(document.createTextNode(emoji))
-  if (counts[emoji] > 0) btn.appendChild(el('span', { class: 'ct', text: counts[emoji] }))
 }
 
 function renderCommentForm (hikeNr) {
@@ -511,7 +486,6 @@ async function onDeleteComment (nr) {
   if (!confirm(t('confirm.delComment'))) return
   try {
     await deleteComment(nr)
-    dropComment(nr)
     toast(t('toast.commentDeleted'), 'ok', 'DELETE 200')
     if (state.openHike) openDetail(state.openHike)
   } catch (e) { showError(e, 'toast.commentDeleted') }
